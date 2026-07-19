@@ -67,6 +67,7 @@ configurations {
 dependencies {
     // Fabric
     minecraft(libs.minecraft)
+    mappings(variantOf(libs.yarn) { classifier("v2") })
     implementation(libs.fabric.loader)
 
     val fapiVersion = libs.versions.fabric.api.get()
@@ -139,15 +140,6 @@ loom {
     accessWidenerPath = file("src/main/resources/meteor-client.classtweaker")
 }
 
-fun toMinecraftCompat(version: String): String {
-    val match = Regex("""^(\d{2})\.([1-9]\d*)(?:\.([1-9]\d*))?$""")
-        .matchEntire(version)
-        ?: error("Invalid Minecraft version format: $version. Expected YY.D or YY.D.H")
-
-    val (year, drop, _) = match.destructured
-    return "~$year.$drop"
-}
-
 tasks {
     processResources {
         val buildNumber = providers.gradleProperty("build_number").getOrElse("")
@@ -158,7 +150,7 @@ tasks {
             "build_number" to buildNumber,
             "commit" to commit,
             "jdk_version" to libs.versions.jdk.get(),
-            "minecraft_version" to toMinecraftCompat(libs.versions.minecraft.get()),
+            "minecraft_version" to libs.versions.minecraft.get(),
             "loader_version" to libs.versions.fabric.loader.get()
         )
 
