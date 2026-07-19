@@ -1,0 +1,92 @@
+{
+  "nodes": {
+    "baritone": {
+      "inputs": {
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "pkgs-by-name": [
+          "pkgs-by-name"
+        ]
+      },
+      "locked": {
+        "lastModified": 1784493055,
+        "narHash": "sha256-RiVkULxjJbG2tC6XEG+ri8DshrveiHgVja4F/+aLmrg=",
+        "owner": "TheColorman",
+        "repo": "baritone",
+        "rev": "3e79e102e4669a5bd14bb1ac407026a705ac6922",
+        "type": "github"
+      },
+      "original": {
+        "owner": "TheColorman",
+        "ref": "1.21.11",
+        "repo": "baritone",
+        "type": "github"
+      }
+    },
+    "flake-parts": {
+      "inputs": {
+        "nixpkgs-lib": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1782949081,
+        "narHash": "sha256-vp6Y/Grm98ESt6ceOkWiHWyZRDV3J1RID4w+6NWK9yA=",
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "rev": "17c9d6cdfc60c64f4ee8d306f9bc0b4ccb51481e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "type": "github"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1784453100,
+        "narHash": "sha256-zpGZb8FYui+i8KLtC0nlcmb0voR2zB80Qn8pe7lzIbk=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "b471514bed69eff5255c8e63c1f80e5fe56c616f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixpkgs-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "pkgs-by-name": {
+      "locked": {
+        "lastModified": 1769286518,
+        "narHash": "sha256-F7VlUICvYp2wJKyQqM6d46BNEZCzMQ6dMH9zbmjuybc=",
+        "owner": "drupol",
+        "repo": "pkgs-by-name-for-flake-parts",
+        "rev": "7ba1cd4a9a72c9c6c272018a63f090f2c912a171",
+        "type": "github"
+      },
+      "original": {
+        "owner": "drupol",
+        "repo": "pkgs-by-name-for-flake-parts",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "baritone": "baritone",
+        "flake-parts": "flake-parts",
+        "nixpkgs": "nixpkgs",
+        "pkgs-by-name": "pkgs-by-name"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}
