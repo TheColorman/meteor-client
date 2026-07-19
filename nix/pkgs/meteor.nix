@@ -9,6 +9,8 @@
 let
   gradle = gradle_9;
   jdk = jdk21;
+  baritone = inputs.baritone.packages.${stdenv.hostPlatform.system}.baritone-meteor;
+  baritoneJar = "${baritone}/baritone-api-fabric-1.17.0+1.21.11.jar";
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "meteor-client";
@@ -34,7 +36,10 @@ stdenv.mkDerivation (finalAttrs: {
 
   __darwinAllowLocalNetworking = true;
 
-  gradleFlags = [ "-Dfile.encoding=utf-8" ];
+  gradleFlags = [
+    "-Dfile.encoding=utf-8"
+    "-PbaritoneJar=${baritoneJar}"
+  ];
 
   gradleBuildTask = "build";
 

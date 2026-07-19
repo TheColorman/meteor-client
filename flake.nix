@@ -25,14 +25,26 @@
 
         systems = lib.systems.flakeExposed;
 
-        perSystem = { pkgs, ... }: {
-          pkgsDirectory = ./nix/pkgs;
+        perSystem =
+          {
+            pkgs,
+            system,
+            self',
+            ...
+          }:
+          {
+            pkgsDirectory = ./nix/pkgs;
+            packages = {
+              baritone = inputs.baritone.packages.${system}.default;
+              default = self'.packages.meteor;
+            };
 
-          devShells.default = pkgs.mkShellNoCC {
-            packages = with pkgs; [
-              gradle_9
-              jdk25
-            ];
+            devShells.default = pkgs.mkShellNoCC {
+              packages = with pkgs; [
+                gradle_9
+                jdk25
+              ];
+            };
           };
       }
     );

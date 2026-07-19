@@ -45,6 +45,7 @@ repositories {
 
 val modInclude: Configuration by configurations.creating
 val jij: Configuration by configurations.creating
+val baritoneJar = providers.gradleProperty("baritoneJar").get()
 
 configurations {
     // include mods
@@ -82,7 +83,7 @@ dependencies {
     compileOnly(libs.viafabricplus) { isTransitive = false }
     compileOnly(libs.viafabricplus.api) { isTransitive = false }
 
-    compileOnly(libs.baritone)
+    compileOnly(files(baritoneJar))
     compileOnly(libs.modmenu)
 
     // Libraries (JAR-in-JAR)

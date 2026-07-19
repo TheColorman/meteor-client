@@ -13,11 +13,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1784493055,
-        "narHash": "sha256-RiVkULxjJbG2tC6XEG+ri8DshrveiHgVja4F/+aLmrg=",
+        "lastModified": 1785668183,
+        "narHash": "sha256-tbF4ftZtVj/gnsuc3X1SoL/aJ3eDzzykgDCMTzHDVN4=",
         "owner": "TheColorman",
         "repo": "baritone",
-        "rev": "3e79e102e4669a5bd14bb1ac407026a705ac6922",
+        "rev": "85e2c92332d773594eec2fe7cae8d0648bcb8320",
         "type": "github"
       },
       "original": {
