@@ -5,8 +5,8 @@
 
 package meteordevelopment.meteorclient.utils.render;
 
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.render.VertexConsumerProvider;
 
-public interface IVertexConsumerProvider extends MultiBufferSource {
+public interface IVertexConsumerProvider extends VertexConsumerProvider {
     void setOffset(int offsetX, int offsetY, int offsetZ);
 }

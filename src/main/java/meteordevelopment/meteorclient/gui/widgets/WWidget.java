@@ -9,9 +9,9 @@ import meteordevelopment.meteorclient.gui.GuiTheme;
 import meteordevelopment.meteorclient.gui.renderer.GuiRenderer;
 import meteordevelopment.meteorclient.gui.utils.BaseWidget;
 import meteordevelopment.meteorclient.gui.widgets.containers.WView;
-import net.minecraft.client.input.CharacterEvent;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.gui.Click;
+import net.minecraft.client.input.CharInput;
+import net.minecraft.client.input.KeyInput;
 
 public abstract class WWidget implements BaseWidget {
     public boolean visible = true;
@@ -29,8 +29,7 @@ public abstract class WWidget implements BaseWidget {
     protected boolean instantTooltips;
     protected double mouseOverTimer;
 
-    public void init() {
-    }
+    public void init() {}
 
     public void move(double deltaX, double deltaY) {
         x = Math.round(x + deltaX);
@@ -85,7 +84,8 @@ public abstract class WWidget implements BaseWidget {
                 WView view = getView();
                 if (view == null || view.mouseOver) renderer.tooltip(tooltip);
             }
-        } else {
+        }
+        else {
             mouseOverTimer = 0;
         }
 
@@ -93,66 +93,45 @@ public abstract class WWidget implements BaseWidget {
         return false;
     }
 
-    protected void onRender(GuiRenderer renderer, double mouseX, double mouseY, double delta) {
-    }
+    protected void onRender(GuiRenderer renderer, double mouseX, double mouseY, double delta) {}
 
     // Events
 
-    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
+    public boolean mouseClicked(Click click, boolean doubled) {
         return onMouseClicked(click, doubled);
     }
+    public boolean onMouseClicked(Click click, boolean doubled) { return false; }
 
-    public boolean onMouseClicked(MouseButtonEvent click, boolean doubled) {
-        return false;
-    }
-
-    public boolean mouseReleased(MouseButtonEvent click) {
+    public boolean mouseReleased(Click click) {
         return onMouseReleased(click);
     }
-
-    public boolean onMouseReleased(MouseButtonEvent click) {
-        return false;
-    }
+    public boolean onMouseReleased(Click click) { return false; }
 
     public void mouseMoved(double mouseX, double mouseY, double lastMouseX, double lastMouseY) {
         mouseOver = isOver(mouseX, mouseY);
         onMouseMoved(mouseX, mouseY, lastMouseX, lastMouseY);
     }
-
-    public void onMouseMoved(double mouseX, double mouseY, double lastMouseX, double lastMouseY) {
-    }
+    public void onMouseMoved(double mouseX, double mouseY, double lastMouseX, double lastMouseY) {}
 
     public boolean mouseScrolled(double amount) {
         return onMouseScrolled(amount);
     }
+    public boolean onMouseScrolled(double amount) { return false; }
 
-    public boolean onMouseScrolled(double amount) {
-        return false;
-    }
-
-    public boolean keyPressed(KeyEvent input) {
+    public boolean keyPressed(KeyInput input) {
         return onKeyPressed(input);
     }
+    public boolean onKeyPressed(KeyInput input) { return false; }
 
-    public boolean onKeyPressed(KeyEvent input) {
-        return false;
-    }
-
-    public boolean keyRepeated(KeyEvent input) {
+    public boolean keyRepeated(KeyInput input) {
         return onKeyRepeated(input);
     }
+    public boolean onKeyRepeated(KeyInput input) { return false; }
 
-    public boolean onKeyRepeated(KeyEvent input) {
-        return false;
-    }
-
-    public boolean charTyped(CharacterEvent input) {
+    public boolean charTyped(CharInput input) {
         return onCharTyped(input);
     }
-
-    public boolean onCharTyped(CharacterEvent input) {
-        return false;
-    }
+    public boolean onCharTyped(CharInput input) { return false; }
 
     // Other
 
@@ -166,8 +145,7 @@ public abstract class WWidget implements BaseWidget {
     }
 
     public WView getView() {
-        if (this instanceof WView view) return view;
-        return parent != null ? parent.getView() : null;
+        return this instanceof WView ? (WView) this : (parent != null ? parent.getView() : null);
     }
 
     public boolean isOver(double x, double y) {

@@ -5,43 +5,42 @@
 
 package meteordevelopment.meteorclient.utils.render;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import meteordevelopment.meteorclient.events.render.Render3DEvent;
-import meteordevelopment.meteorclient.mixin.RenderTypeAccessor;
+import meteordevelopment.meteorclient.mixin.RenderLayerAccessor;
 import meteordevelopment.meteorclient.renderer.Renderer3D;
 import meteordevelopment.meteorclient.renderer.ShapeMode;
 import meteordevelopment.meteorclient.utils.render.color.Color;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.SubmitNodeStorage;
-import net.minecraft.client.renderer.entity.EntityRenderer;
-import net.minecraft.client.renderer.entity.state.EntityRenderState;
-import net.minecraft.client.renderer.feature.FeatureRenderDispatcher;
-import net.minecraft.client.renderer.rendertype.OutputTarget;
-import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.client.render.OutputTarget;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.command.OrderedRenderCommandQueueImpl;
+import net.minecraft.client.render.command.RenderDispatcher;
+import net.minecraft.client.render.entity.EntityRenderer;
+import net.minecraft.client.render.entity.state.EntityRenderState;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.entity.Entity;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 
 import static meteordevelopment.meteorclient.MeteorClient.mc;
 
 public class WireframeEntityRenderer {
-    private static final PoseStack matrices = new PoseStack();
+    private static final MatrixStack matrices = new MatrixStack();
 
     private static Renderer3D renderer;
 
-    private static final SubmitNodeStorage renderCommandQueue = new SubmitNodeStorage();
+    private static final OrderedRenderCommandQueueImpl renderCommandQueue = new OrderedRenderCommandQueueImpl();
 
-    private static final FeatureRenderDispatcher renderDispatcher = new FeatureRenderDispatcher(
+    private static final RenderDispatcher renderDispatcher = new RenderDispatcher(
         renderCommandQueue,
-        mc.getModelManager(),
+        mc.getBlockRenderManager(),
         MyVertexConsumerProvider.INSTANCE,
         mc.getAtlasManager(),
         NoopOutlineVertexConsumerProvider.INSTANCE,
         NoopImmediateVertexConsumerProvider.INSTANCE,
-        mc.font,
-        mc.gameRenderer.getGameRenderState()
+        mc.textRenderer
     );
 
     private static Color sideColor;
@@ -62,53 +61,60 @@ public class WireframeEntityRenderer {
         WireframeEntityRenderer.lineColor = lineColor;
         WireframeEntityRenderer.shapeMode = shapeMode;
 
-        float tickDelta = mc.level.tickRateManager().isFrozen() ? 1 : event.tickDelta;
+        float tickDelta = mc.world.getTickManager().isFrozen() ? 1 : event.tickDelta;
 
-        offsetX = Mth.lerp(tickDelta, entity.xOld, entity.getX());
-        offsetY = Mth.lerp(tickDelta, entity.yOld, entity.getY());
-        offsetZ = Mth.lerp(tickDelta, entity.zOld, entity.getZ());
+        offsetX = MathHelper.lerp(tickDelta, entity.lastRenderX, entity.getX());
+        offsetY = MathHelper.lerp(tickDelta, entity.lastRenderY, entity.getY());
+        offsetZ = MathHelper.lerp(tickDelta, entity.lastRenderZ, entity.getZ());
 
         var renderer = (EntityRenderer<Entity, EntityRenderState>) mc.getEntityRenderDispatcher().getRenderer(entity);
-        var state = renderer.createRenderState(entity, tickDelta);
+        var state = renderer.getAndUpdateRenderState(entity, tickDelta);
 
-        Vec3 entityOffset = renderer.getRenderOffset(state);
+        Vec3d entityOffset = renderer.getPositionOffset(state);
         offsetX += entityOffset.x;
         offsetY += entityOffset.y;
         offsetZ += entityOffset.z;
 
-        matrices.pushPose();
+        matrices.push();
         matrices.scale((float) scale, (float) scale, (float) scale);
-        renderer.submit(state, matrices, renderCommandQueue, mc.gameRenderer.getGameRenderState().levelRenderState.cameraRenderState);
-        matrices.popPose();
+        renderer.render(state, matrices, renderCommandQueue, mc.gameRenderer.getEntityRenderStates().cameraRenderState);
+        matrices.pop();
 
-        renderDispatcher.renderAllFeatures();
-        renderCommandQueue.endFrame();
+        renderDispatcher.render();
+        renderCommandQueue.onNextFrame();
     }
 
-    private static class MyVertexConsumerProvider extends MultiBufferSource.BufferSource {
+    private static class MyVertexConsumerProvider extends VertexConsumerProvider.Immediate {
         public static final MyVertexConsumerProvider INSTANCE = new MyVertexConsumerProvider();
-        private final Object2ObjectOpenHashMap<RenderType, MyVertexConsumer> buffers = new Object2ObjectOpenHashMap<>();
+        private final Object2ObjectOpenHashMap<RenderLayer, MyVertexConsumer> buffers = new Object2ObjectOpenHashMap<>();
 
         protected MyVertexConsumerProvider() {
             super(null, null);
         }
 
         @Override
-        public VertexConsumer getBuffer(RenderType layer) {
-            if (((RenderTypeAccessor) layer).getState().outputTarget == OutputTarget.ITEM_ENTITY_TARGET) {
+        public VertexConsumer getBuffer(RenderLayer layer) {
+            if (((RenderLayerAccessor) layer).getRenderSetup().outputTarget == OutputTarget.ITEM_ENTITY_TARGET) {
                 return NoopVertexConsumer.INSTANCE;
             }
 
-            return buffers.computeIfAbsent(layer, _ -> new MyVertexConsumer());
+            MyVertexConsumer vertexConsumer = buffers.get(layer);
+
+            if (vertexConsumer == null) {
+                vertexConsumer = new MyVertexConsumer();
+                buffers.put(layer, vertexConsumer);
+            }
+
+            return vertexConsumer;
         }
 
         @Override
-        public void endBatch() {
+        public void draw() {
             throw new RuntimeException();
         }
 
         @Override
-        public void endBatch(RenderType layer) {
+        public void draw(RenderLayer layer) {
             throw new RuntimeException();
         }
     }
@@ -121,7 +127,7 @@ public class WireframeEntityRenderer {
         private int i = 0;
 
         @Override
-        public VertexConsumer addVertex(float x, float y, float z) {
+        public VertexConsumer vertex(float x, float y, float z) {
             xs[i] = x;
             ys[i] = y;
             zs[i] = z;
@@ -146,37 +152,37 @@ public class WireframeEntityRenderer {
         }
 
         @Override
-        public VertexConsumer setColor(int red, int green, int blue, int alpha) {
+        public VertexConsumer color(int red, int green, int blue, int alpha) {
             return this;
         }
 
         @Override
-        public VertexConsumer setColor(int argb) {
+        public VertexConsumer color(int argb) {
             return this;
         }
 
         @Override
-        public VertexConsumer setUv(float u, float v) {
+        public VertexConsumer texture(float u, float v) {
             return this;
         }
 
         @Override
-        public VertexConsumer setUv1(int u, int v) {
+        public VertexConsumer overlay(int u, int v) {
             return this;
         }
 
         @Override
-        public VertexConsumer setUv2(int u, int v) {
+        public VertexConsumer light(int u, int v) {
             return this;
         }
 
         @Override
-        public VertexConsumer setNormal(float x, float y, float z) {
+        public VertexConsumer normal(float x, float y, float z) {
             return this;
         }
 
         @Override
-        public VertexConsumer setLineWidth(float width) {
+        public VertexConsumer lineWidth(float width) {
             return this;
         }
     }

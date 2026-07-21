@@ -6,7 +6,7 @@
 package meteordevelopment.meteorclient.gui.utils;
 
 import meteordevelopment.meteorclient.utils.misc.ISerializable;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 
 public class WindowConfig implements ISerializable<WindowConfig> {
     public boolean expanded = true;
@@ -16,8 +16,8 @@ public class WindowConfig implements ISerializable<WindowConfig> {
     // Saving
 
     @Override
-    public CompoundTag toTag() {
-        CompoundTag tag = new CompoundTag();
+    public NbtCompound toTag() {
+        NbtCompound tag = new NbtCompound();
 
         tag.putBoolean("expanded", expanded);
         tag.putDouble("x", x);
@@ -27,7 +27,7 @@ public class WindowConfig implements ISerializable<WindowConfig> {
     }
 
     @Override
-    public WindowConfig fromTag(CompoundTag tag) {
+    public WindowConfig fromTag(NbtCompound tag) {
         tag.getBoolean("expanded").ifPresent(bool -> expanded = bool);
         tag.getDouble("x").ifPresent(x1 -> x = x1);
         tag.getDouble("y").ifPresent(y1 -> y = y1);

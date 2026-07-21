@@ -5,102 +5,102 @@
 
 package meteordevelopment.meteorclient.utils.player;
 
-import net.minecraft.client.player.ClientInput;
-import net.minecraft.world.entity.player.Input;
-import net.minecraft.world.phys.Vec2;
+import net.minecraft.client.input.Input;
+import net.minecraft.util.PlayerInput;
+import net.minecraft.util.math.Vec2f;
 
-public class CustomPlayerInput extends ClientInput {
+public class CustomPlayerInput extends Input {
     @Override
     public void tick() {
-        float f = this.keyPresses.forward() == this.keyPresses.backward() ? 0.0F : (this.keyPresses.forward() ? 1.0F : -1.0F);
-        float g = this.keyPresses.left() == this.keyPresses.right() ? 0.0F : (this.keyPresses.left() ? 1.0F : -1.0F);
-        this.moveVector = new Vec2(g, f).normalized();
+        float f = this.playerInput.forward() == this.playerInput.backward() ? 0.0F : (this.playerInput.forward() ? 1.0F : -1.0F);
+        float g = this.playerInput.left() == this.playerInput.right() ? 0.0F : (this.playerInput.left() ? 1.0F : -1.0F);
+        this.movementVector = new Vec2f(g, f).normalize();
     }
 
     public void stop() {
-        this.keyPresses = Input.EMPTY;
+        this.playerInput = PlayerInput.DEFAULT;
     }
 
     public void forward(boolean bool) {
-        this.keyPresses = new Input(
+        this.playerInput = new PlayerInput(
             bool,
-            this.keyPresses.backward(),
-            this.keyPresses.left(),
-            this.keyPresses.right(),
-            this.keyPresses.jump(),
-            this.keyPresses.shift(),
-            this.keyPresses.sprint()
+            this.playerInput.backward(),
+            this.playerInput.left(),
+            this.playerInput.right(),
+            this.playerInput.jump(),
+            this.playerInput.sneak(),
+            this.playerInput.sprint()
         );
     }
 
     public void backward(boolean bool) {
-        this.keyPresses = new Input(
-            this.keyPresses.forward(),
+        this.playerInput = new PlayerInput(
+            this.playerInput.forward(),
             bool,
-            this.keyPresses.left(),
-            this.keyPresses.right(),
-            this.keyPresses.jump(),
-            this.keyPresses.shift(),
-            this.keyPresses.sprint()
+            this.playerInput.left(),
+            this.playerInput.right(),
+            this.playerInput.jump(),
+            this.playerInput.sneak(),
+            this.playerInput.sprint()
         );
     }
 
     public void left(boolean bool) {
-        this.keyPresses = new Input(
-            this.keyPresses.forward(),
-            this.keyPresses.backward(),
+        this.playerInput = new PlayerInput(
+            this.playerInput.forward(),
+            this.playerInput.backward(),
             bool,
-            this.keyPresses.right(),
-            this.keyPresses.jump(),
-            this.keyPresses.shift(),
-            this.keyPresses.sprint()
+            this.playerInput.right(),
+            this.playerInput.jump(),
+            this.playerInput.sneak(),
+            this.playerInput.sprint()
         );
     }
 
     public void right(boolean bool) {
-        this.keyPresses = new Input(
-            this.keyPresses.forward(),
-            this.keyPresses.backward(),
-            this.keyPresses.left(),
+        this.playerInput = new PlayerInput(
+            this.playerInput.forward(),
+            this.playerInput.backward(),
+            this.playerInput.left(),
             bool,
-            this.keyPresses.jump(),
-            this.keyPresses.shift(),
-            this.keyPresses.sprint()
+            this.playerInput.jump(),
+            this.playerInput.sneak(),
+            this.playerInput.sprint()
         );
     }
 
     public void jump(boolean bool) {
-        this.keyPresses = new Input(
-            this.keyPresses.forward(),
-            this.keyPresses.backward(),
-            this.keyPresses.left(),
-            this.keyPresses.right(),
+        this.playerInput = new PlayerInput(
+            this.playerInput.forward(),
+            this.playerInput.backward(),
+            this.playerInput.left(),
+            this.playerInput.right(),
             bool,
-            this.keyPresses.shift(),
-            this.keyPresses.sprint()
+            this.playerInput.sneak(),
+            this.playerInput.sprint()
         );
     }
 
     public void sneak(boolean bool) {
-        this.keyPresses = new Input(
-            this.keyPresses.forward(),
-            this.keyPresses.backward(),
-            this.keyPresses.left(),
-            this.keyPresses.right(),
-            this.keyPresses.jump(),
+        this.playerInput = new PlayerInput(
+            this.playerInput.forward(),
+            this.playerInput.backward(),
+            this.playerInput.left(),
+            this.playerInput.right(),
+            this.playerInput.jump(),
             bool,
-            this.keyPresses.sprint()
+            this.playerInput.sprint()
         );
     }
 
     public void sprint(boolean bool) {
-        this.keyPresses = new Input(
-            this.keyPresses.forward(),
-            this.keyPresses.backward(),
-            this.keyPresses.left(),
-            this.keyPresses.right(),
-            this.keyPresses.jump(),
-            this.keyPresses.shift(),
+        this.playerInput = new PlayerInput(
+            this.playerInput.forward(),
+            this.playerInput.backward(),
+            this.playerInput.left(),
+            this.playerInput.right(),
+            this.playerInput.jump(),
+            this.playerInput.sneak(),
             bool
         );
     }

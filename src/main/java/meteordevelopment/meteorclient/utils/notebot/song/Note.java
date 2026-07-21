@@ -5,7 +5,7 @@
 
 package meteordevelopment.meteorclient.utils.notebot.song;
 
-import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
+import net.minecraft.block.enums.NoteBlockInstrument;
 
 import java.util.Objects;
 

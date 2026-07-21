@@ -8,20 +8,20 @@ package meteordevelopment.meteorclient.systems.modules.combat;
 
 import meteordevelopment.meteorclient.events.packets.PacketEvent;
 import meteordevelopment.meteorclient.events.world.TickEvent;
-import meteordevelopment.meteorclient.mixininterface.IServerboundMovePlayerPacket;
-import meteordevelopment.meteorclient.mixininterface.IVec3;
+import meteordevelopment.meteorclient.mixininterface.IPlayerInteractEntityC2SPacket;
+import meteordevelopment.meteorclient.mixininterface.IPlayerMoveC2SPacket;
+import meteordevelopment.meteorclient.mixininterface.IVec3d;
 import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.systems.modules.Categories;
 import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.meteorclient.systems.modules.Modules;
 import meteordevelopment.meteorclient.utils.entity.EntityUtils;
 import meteordevelopment.orbit.EventHandler;
-import net.minecraft.network.protocol.game.ServerboundAttackPacket;
-import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
-import net.minecraft.network.protocol.game.ServerboundSwingPacket;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.item.MaceItem;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.item.MaceItem;
+import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
+import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 
 public class Criticals extends Module {
 
@@ -51,17 +51,17 @@ public class Criticals extends Module {
     );
 
     private final Setting<Double> extraHeight = sgMace.add(new DoubleSetting.Builder()
-        .name("additional-height")
-        .description("The amount of additional height to spoof. More height means more damage.")
-        .defaultValue(0.0)
+    	.name("additional-height")
+    	.description("The amount of additional height to spoof. More height means more damage.")
+    	.defaultValue(0.0)
         .min(0)
         .sliderRange(0, 100)
         .visible(mace::get)
-        .build()
+    	.build()
     );
 
-    private ServerboundAttackPacket attackPacket;
-    private ServerboundSwingPacket swingPacket;
+    private PlayerInteractEntityC2SPacket attackPacket;
+    private HandSwingC2SPacket swingPacket;
     private boolean sendPackets;
     private int sendTimer;
     private double lastY;
@@ -83,9 +83,9 @@ public class Criticals extends Module {
 
     @EventHandler
     private void onSendPacket(PacketEvent.Send event) {
-        if (event.packet instanceof ServerboundAttackPacket(int entityId)) {
-            if (mace.get() && mc.player.getMainHandItem().getItem() instanceof MaceItem) {
-                if (mc.player.isFallFlying()) return;
+        if (event.packet instanceof IPlayerInteractEntityC2SPacket packet && packet.meteor$getType() == PlayerInteractEntityC2SPacket.InteractType.ATTACK) {
+            if (mace.get() && mc.player.getMainHandStack().getItem() instanceof MaceItem) {
+                if (mc.player.isGliding()) return;
 
                 sendPacket(0);
                 sendPacket(1.501 + extraHeight.get());
@@ -93,7 +93,7 @@ public class Criticals extends Module {
             } else {
                 if (skipCrit()) return;
 
-                Entity entity = mc.level.getEntity(entityId);
+                Entity entity = packet.meteor$getEntity();
 
                 if (!(entity instanceof LivingEntity) || (entity != Modules.get().get(KillAura.class).getTarget() && ka.get()))
                     return;
@@ -115,14 +115,14 @@ public class Criticals extends Module {
                     case Jump, MiniJump -> {
                         if (!sendPackets) {
                             sendPackets = true;
-                            attackPacket = (ServerboundAttackPacket) event.packet;
+                            attackPacket = (PlayerInteractEntityC2SPacket) event.packet;
 
                             if (mode.get() == Mode.Jump) {
-                                mc.player.jumpFromGround();
+                                mc.player.jump();
                                 waitingForPeak = true;
                                 lastY = mc.player.getY();
                             } else {
-                                ((IVec3) mc.player.getDeltaMovement()).meteor$setY(0.25);
+                                ((IVec3d) mc.player.getVelocity()).meteor$setY(0.25);
                                 sendTimer = 4;
                             }
                             event.cancel();
@@ -130,11 +130,12 @@ public class Criticals extends Module {
                     }
                 }
             }
-        } else if (event.packet instanceof ServerboundSwingPacket serverboundSwingPacket && mode.get() != Mode.Packet) {
+        }
+        else if (event.packet instanceof HandSwingC2SPacket && mode.get() != Mode.Packet) {
             if (skipCrit()) return;
 
             if (sendPackets && swingPacket == null) {
-                swingPacket = serverboundSwingPacket;
+                swingPacket = (HandSwingC2SPacket) event.packet;
                 event.cancel();
             }
         }
@@ -158,8 +159,8 @@ public class Criticals extends Module {
                     sendPackets = false;
                     return;
                 }
-                mc.getConnection().send(attackPacket);
-                mc.getConnection().send(swingPacket);
+                mc.getNetworkHandler().sendPacket(attackPacket);
+                mc.getNetworkHandler().sendPacket(swingPacket);
 
                 attackPacket = null;
                 swingPacket = null;
@@ -176,16 +177,16 @@ public class Criticals extends Module {
         double y = mc.player.getY();
         double z = mc.player.getZ();
 
-        ServerboundMovePlayerPacket packet = new ServerboundMovePlayerPacket.Pos(x, y + height, z, false, false);
-        ((IServerboundMovePlayerPacket) packet).meteor$setTag(1337);
-        mc.player.connection.send(packet);
+        PlayerMoveC2SPacket packet = new PlayerMoveC2SPacket.PositionAndOnGround(x, y + height, z, false, false);
+        ((IPlayerMoveC2SPacket) packet).meteor$setTag(1337);
+        mc.player.networkHandler.sendPacket(packet);
     }
 
     private boolean skipCrit() {
         if (EntityUtils.isInCobweb(mc.player) && (mode.get() == Mode.Jump || mode.get() == Mode.MiniJump))
             return true;
 
-        return !mc.player.onGround() || mc.player.isInWater() || mc.player.isInLava() || mc.player.onClimbable();
+        return !mc.player.isOnGround() || mc.player.isSubmergedInWater() || mc.player.isInLava() || mc.player.isClimbing();
     }
 
     @Override

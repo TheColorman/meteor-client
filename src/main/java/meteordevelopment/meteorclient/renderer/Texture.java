@@ -5,13 +5,13 @@
 
 package meteordevelopment.meteorclient.renderer;
 
-import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.platform.TextureUtil;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.AddressMode;
 import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.TextureFormat;
-import net.minecraft.client.renderer.texture.AbstractTexture;
+import net.minecraft.client.texture.AbstractTexture;
+import net.minecraft.client.texture.NativeImage;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.stb.STBImage;
@@ -24,18 +24,18 @@ import java.nio.IntBuffer;
 
 public class Texture extends AbstractTexture {
     public Texture(int width, int height, TextureFormat format, FilterMode min, FilterMode mag) {
-        texture = RenderSystem.getDevice().createTexture("", 15, format, width, height, 1, 1);
-        sampler = RenderSystem.getSamplerCache().getSampler(AddressMode.REPEAT, AddressMode.REPEAT, min, mag, false);
+        glTexture = RenderSystem.getDevice().createTexture("", 15, format, width, height, 1, 1);
+        sampler = RenderSystem.getSamplerCache().get(AddressMode.REPEAT, AddressMode.REPEAT, min, mag, false);
 
-        textureView = RenderSystem.getDevice().createTextureView(texture);
+        glTextureView = RenderSystem.getDevice().createTextureView(glTexture);
     }
 
     public int getWidth() {
-        return getTexture().getWidth(0);
+        return getGlTexture().getWidth(0);
     }
 
     public int getHeight() {
-        return getTexture().getHeight(0);
+        return getGlTexture().getHeight(0);
     }
 
     public void upload(byte[] bytes) {
@@ -46,15 +46,15 @@ public class Texture extends AbstractTexture {
         var image = getImage();
 
         buffer.rewind();
-        MemoryUtil.memCopy(MemoryUtil.memAddress(buffer), image.getPointer(), buffer.remaining());
+        MemoryUtil.memCopy(MemoryUtil.memAddress(buffer), image.imageId(), buffer.remaining());
 
-        RenderSystem.getDevice().createCommandEncoder().writeToTexture(texture, image);
+        RenderSystem.getDevice().createCommandEncoder().writeToTexture(glTexture, image);
 
         image.close();
     }
 
     private @NotNull NativeImage getImage() {
-        NativeImage.Format imageFormat = switch (texture.getFormat()) {
+        NativeImage.Format imageFormat = switch (glTexture.getFormat()) {
             case RGBA8 -> NativeImage.Format.RGBA;
             case RED8 -> NativeImage.Format.LUMINANCE;
             default -> throw new IllegalArgumentException();
@@ -87,7 +87,7 @@ public class Texture extends AbstractTexture {
 
                 return texture;
             }
-        } catch (IOException _) {
+        } catch (IOException e) {
             return null;
         }
     }

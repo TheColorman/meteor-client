@@ -8,9 +8,9 @@ package meteordevelopment.meteorclient.systems;
 import meteordevelopment.meteorclient.MeteorClient;
 import meteordevelopment.meteorclient.utils.files.StreamUtils;
 import meteordevelopment.meteorclient.utils.misc.ISerializable;
-import net.minecraft.ReportedException;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtIo;
+import net.minecraft.util.crash.CrashException;
 import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
@@ -38,14 +38,13 @@ public abstract class System<T> implements ISerializable<T> {
         }
     }
 
-    public void init() {
-    }
+    public void init() {}
 
     public void save(File folder) {
         File file = getFile();
         if (file == null) return;
 
-        CompoundTag tag = toTag();
+        NbtCompound tag = toTag();
         if (tag == null) return;
 
         try {
@@ -58,7 +57,7 @@ public abstract class System<T> implements ISerializable<T> {
 
             try {
                 Files.move(tempFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-            } catch (AtomicMoveNotSupportedException _) {
+            } catch (AtomicMoveNotSupportedException e) {
                 StreamUtils.copy(tempFile, file);
             }
 
@@ -82,13 +81,13 @@ public abstract class System<T> implements ISerializable<T> {
             if (file.exists()) {
                 try {
                     fromTag(NbtIo.read(file.toPath()));
-                } catch (ReportedException e) {
+                } catch (CrashException e) {
                     String backupName = FilenameUtils.removeExtension(file.getName()) + "-" + ZonedDateTime.now().format(DATE_TIME_FORMATTER) + ".backup.nbt";
                     File backup = new File(file.getParentFile(), backupName);
 
                     try {
                         Files.move(file.toPath(), backup.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-                    } catch (AtomicMoveNotSupportedException _) {
+                    } catch (AtomicMoveNotSupportedException ex) {
                         StreamUtils.copy(file, backup);
                     }
 
@@ -114,12 +113,12 @@ public abstract class System<T> implements ISerializable<T> {
     }
 
     @Override
-    public CompoundTag toTag() {
+    public NbtCompound toTag() {
         return null;
     }
 
     @Override
-    public T fromTag(CompoundTag tag) {
+    public T fromTag(NbtCompound tag) {
         return null;
     }
 }

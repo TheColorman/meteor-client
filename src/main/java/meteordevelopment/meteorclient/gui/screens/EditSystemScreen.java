@@ -29,7 +29,7 @@ public abstract class EditSystemScreen<T> extends WindowScreen {
 
         WButton done = add(theme.button(isNew ? "Create" : "Save")).expandX().widget();
         done.action = () -> {
-            if (save()) onClose();
+            if (save()) close();
         };
 
         enterAction = done.action;
@@ -46,8 +46,6 @@ public abstract class EditSystemScreen<T> extends WindowScreen {
     }
 
     public abstract T create();
-
     public abstract boolean save();
-
     public abstract Settings getSettings();
 }

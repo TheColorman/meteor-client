@@ -16,8 +16,8 @@ import meteordevelopment.meteorclient.utils.Utils;
 import meteordevelopment.meteorclient.utils.entity.fakeplayer.FakePlayerEntity;
 import meteordevelopment.meteorclient.utils.misc.Keybind;
 import meteordevelopment.orbit.EventHandler;
-import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
+import net.minecraft.util.math.Vec3d;
 import org.joml.Vector3d;
 
 import java.util.ArrayList;
@@ -54,7 +54,7 @@ public class Blink extends Module {
         .build()
     );
 
-    private final List<ServerboundMovePlayerPacket> packets = new ArrayList<>();
+    private final List<PlayerMoveC2SPacket> packets = new ArrayList<>();
     private FakePlayerEntity model;
     private final Vector3d start = new Vector3d();
 
@@ -79,7 +79,7 @@ public class Blink extends Module {
             model.spawn();
         }
 
-        Utils.set(start, mc.player.position());
+        Utils.set(start, mc.player.getEntityPos());
     }
 
     @Override
@@ -90,7 +90,7 @@ public class Blink extends Module {
 
         if (cancelled) {
             mc.player.setPos(start.x, start.y, start.z);
-            mc.player.setDeltaMovement(Vec3.ZERO);
+            mc.player.setVelocity(Vec3d.ZERO);
         }
 
         cancelled = false;
@@ -113,18 +113,18 @@ public class Blink extends Module {
         if (!Utils.canUpdate()) return;
 
         if (sending) return;
-        if (!(event.packet instanceof ServerboundMovePlayerPacket p)) return;
+        if (!(event.packet instanceof PlayerMoveC2SPacket p)) return;
         event.cancel();
 
-        ServerboundMovePlayerPacket prev = packets.isEmpty() ? null : packets.getLast();
+        PlayerMoveC2SPacket prev = packets.isEmpty() ? null : packets.getLast();
 
         if (prev != null &&
-            p.isOnGround() == prev.isOnGround() &&
-            p.getYRot(-1) == prev.getYRot(-1) &&
-            p.getXRot(-1) == prev.getXRot(-1) &&
-            p.getX(-1) == prev.getX(-1) &&
-            p.getY(-1) == prev.getY(-1) &&
-            p.getZ(-1) == prev.getZ(-1)
+                p.isOnGround() == prev.isOnGround() &&
+                p.getYaw(-1) == prev.getYaw(-1) &&
+                p.getPitch(-1) == prev.getPitch(-1) &&
+                p.getX(-1) == prev.getX(-1) &&
+                p.getY(-1) == prev.getY(-1) &&
+                p.getZ(-1) == prev.getZ(-1)
         ) return;
 
         synchronized (packets) {
@@ -151,7 +151,7 @@ public class Blink extends Module {
     private void dumpPackets(boolean send) {
         sending = true;
         synchronized (packets) {
-            if (send) packets.forEach(mc.player.connection::send);
+            if (send) packets.forEach(mc.player.networkHandler::sendPacket);
             packets.clear();
         }
         sending = false;

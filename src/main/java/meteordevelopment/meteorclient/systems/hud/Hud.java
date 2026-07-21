@@ -20,8 +20,8 @@ import meteordevelopment.meteorclient.utils.misc.Keybind;
 import meteordevelopment.meteorclient.utils.misc.NbtUtils;
 import meteordevelopment.meteorclient.utils.render.color.SettingColor;
 import meteordevelopment.orbit.EventHandler;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -47,7 +47,7 @@ public class Hud extends System<Hud> implements Iterable<HudElement> {
         .name("custom-font")
         .description("Text will use custom font.")
         .defaultValue(true)
-        .onChanged(_ -> {
+        .onChanged(aBoolean -> {
             for (HudElement element : elements) element.onFontChanged();
         })
         .build()
@@ -231,9 +231,9 @@ public class Hud extends System<Hud> implements Iterable<HudElement> {
         if (Utils.isLoading()) return;
 
         if (!(active || HudEditorScreen.isOpen()) || shouldHideHud()) return;
-        if ((mc.options.hideGui || mc.debugEntries.isOverlayVisible()) && !HudEditorScreen.isOpen()) return;
+        if ((mc.options.hudHidden || mc.debugHudEntryList.isF3Enabled()) && !HudEditorScreen.isOpen()) return;
 
-        HudRenderer.INSTANCE.begin(event.graphics);
+        HudRenderer.INSTANCE.begin(event.drawContext);
 
         for (HudElement element : elements) {
             element.updatePos();
@@ -247,7 +247,7 @@ public class Hud extends System<Hud> implements Iterable<HudElement> {
     }
 
     private boolean shouldHideHud() {
-        return hideInMenus.get() && mc.screen != null && !(mc.screen instanceof WidgetScreen);
+        return hideInMenus.get() && mc.currentScreen != null && !(mc.currentScreen instanceof WidgetScreen);
     }
 
     @EventHandler
@@ -274,8 +274,8 @@ public class Hud extends System<Hud> implements Iterable<HudElement> {
     // Serialization
 
     @Override
-    public CompoundTag toTag() {
-        CompoundTag tag = new CompoundTag();
+    public NbtCompound toTag() {
+        NbtCompound tag = new NbtCompound();
 
         tag.putInt("__version__", 1);
 
@@ -287,7 +287,7 @@ public class Hud extends System<Hud> implements Iterable<HudElement> {
     }
 
     @Override
-    public Hud fromTag(CompoundTag tag) {
+    public Hud fromTag(NbtCompound tag) {
         if (!tag.contains("__version__")) {
             resetToDefaultElements();
             return this;
@@ -299,8 +299,8 @@ public class Hud extends System<Hud> implements Iterable<HudElement> {
         // Elements
         elements.clear();
 
-        for (Tag e : tag.getListOrEmpty("elements")) {
-            CompoundTag c = (CompoundTag) e;
+        for (NbtElement e : tag.getListOrEmpty("elements")) {
+            NbtCompound c = (NbtCompound) e;
             if (c.getString("name").isEmpty()) continue;
 
             HudElementInfo<?> info = infos.get(c.getString("name").get());

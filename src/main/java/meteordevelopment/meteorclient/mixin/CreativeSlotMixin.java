@@ -6,24 +6,22 @@
 package meteordevelopment.meteorclient.mixin;
 
 import meteordevelopment.meteorclient.mixininterface.ISlot;
-import net.minecraft.world.inventory.Slot;
+import net.minecraft.screen.slot.Slot;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
-@Mixin(targets = "net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen$SlotWrapper")
+@Mixin(targets = "net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen$CreativeSlot")
 public abstract class CreativeSlotMixin implements ISlot {
-    @Shadow
-    @Final
-    private Slot target;
+    @Shadow @Final Slot slot;
 
     @Override
-    public int meteor$getIndex() {
-        return target.index;
+    public int meteor$getId() {
+        return slot.id;
     }
 
     @Override
-    public int meteor$getSlot() {
-        return target.getContainerSlot();
+    public int meteor$getIndex() {
+        return slot.getIndex();
     }
 }

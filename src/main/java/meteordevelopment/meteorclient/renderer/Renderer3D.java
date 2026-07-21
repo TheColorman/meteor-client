@@ -6,12 +6,12 @@
 package meteordevelopment.meteorclient.renderer;
 
 import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.vertex.PoseStack;
 import meteordevelopment.meteorclient.utils.render.color.Color;
 import meteordevelopment.meteorclient.utils.world.Dir;
-import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.phys.AABB;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 
 public class Renderer3D {
     public final MeshBuilder lines;
@@ -31,15 +31,15 @@ public class Renderer3D {
         triangles.begin();
     }
 
-    public void render(PoseStack matrices) {
+    public void render(MatrixStack matrices) {
         MeshRenderer.begin()
-            .attachments(Minecraft.getInstance().getMainRenderTarget())
+            .attachments(MinecraftClient.getInstance().getFramebuffer())
             .pipeline(linesPipeline)
             .mesh(lines, matrices)
             .end();
 
         MeshRenderer.begin()
-            .attachments(Minecraft.getInstance().getMainRenderTarget())
+            .attachments(MinecraftClient.getInstance().getFramebuffer())
             .pipeline(trianglesPipeline)
             .mesh(triangles, matrices)
             .end();
@@ -91,7 +91,8 @@ public class Renderer3D {
             lines.line(trb, trf);
             lines.line(tlb, trb);
             lines.line(tlf, trf);
-        } else {
+        }
+        else {
             // Bottom to top
             if (Dir.isNot(excludeDir, Dir.WEST) && Dir.isNot(excludeDir, Dir.NORTH)) lines.line(blb, tlb);
             if (Dir.isNot(excludeDir, Dir.WEST) && Dir.isNot(excludeDir, Dir.SOUTH)) lines.line(blf, tlf);
@@ -203,7 +204,8 @@ public class Renderer3D {
 
             // Top
             triangles.quad(tlb, tlf, trf, trb);
-        } else {
+        }
+        else {
             // Bottom to top
             if (Dir.isNot(excludeDir, Dir.WEST)) triangles.quad(blb, blf, tlf, tlb);
             if (Dir.isNot(excludeDir, Dir.EAST)) triangles.quad(brb, trb, trf, brf);
@@ -228,13 +230,11 @@ public class Renderer3D {
     }
 
     public void box(BlockPos pos, Color sideColor, Color lineColor, ShapeMode mode, int excludeDir) {
-        if (mode.lines())
-            boxLines(pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 1, pos.getY() + 1, pos.getZ() + 1, lineColor, excludeDir);
-        if (mode.sides())
-            boxSides(pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 1, pos.getY() + 1, pos.getZ() + 1, sideColor, excludeDir);
+        if (mode.lines()) boxLines(pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 1, pos.getY() + 1, pos.getZ() + 1, lineColor, excludeDir);
+        if (mode.sides()) boxSides(pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 1, pos.getY() + 1, pos.getZ() + 1, sideColor, excludeDir);
     }
 
-    public void box(AABB box, Color sideColor, Color lineColor, ShapeMode mode, int excludeDir) {
+    public void box(Box box, Color sideColor, Color lineColor, ShapeMode mode, int excludeDir) {
         if (mode.lines()) boxLines(box.minX, box.minY, box.minZ, box.maxX, box.maxY, box.maxZ, lineColor, excludeDir);
         if (mode.sides()) boxSides(box.minX, box.minY, box.minZ, box.maxX, box.maxY, box.maxZ, sideColor, excludeDir);
     }

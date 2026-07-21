@@ -5,21 +5,21 @@
 
 package meteordevelopment.meteorclient.settings;
 
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
-import net.minecraft.resources.Identifier;
-import net.minecraft.world.effect.MobEffect;
+import net.minecraft.entity.effect.StatusEffect;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtList;
+import net.minecraft.nbt.NbtString;
+import net.minecraft.registry.Registries;
+import net.minecraft.util.Identifier;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class StatusEffectListSetting extends Setting<List<MobEffect>> {
-    public StatusEffectListSetting(String name, String description, List<MobEffect> defaultValue, Consumer<List<MobEffect>> onChanged, Consumer<Setting<List<MobEffect>>> onModuleActivated, IVisible visible) {
+public class StatusEffectListSetting extends Setting<List<StatusEffect>> {
+    public StatusEffectListSetting(String name, String description, List<StatusEffect> defaultValue, Consumer<List<StatusEffect>> onChanged, Consumer<Setting<List<StatusEffect>>> onModuleActivated, IVisible visible) {
         super(name, description, defaultValue, onChanged, onModuleActivated, visible);
     }
 
@@ -29,38 +29,37 @@ public class StatusEffectListSetting extends Setting<List<MobEffect>> {
     }
 
     @Override
-    protected List<MobEffect> parseImpl(String str) {
+    protected List<StatusEffect> parseImpl(String str) {
         String[] values = str.split(",");
-        List<MobEffect> effects = new ArrayList<>(values.length);
+        List<StatusEffect> effects = new ArrayList<>(values.length);
 
         try {
             for (String value : values) {
-                MobEffect effect = parseId(BuiltInRegistries.MOB_EFFECT, value);
+                StatusEffect effect = parseId(Registries.STATUS_EFFECT, value);
                 if (effect != null) effects.add(effect);
             }
-        } catch (Exception _) {
-        }
+        } catch (Exception ignored) {}
 
         return effects;
     }
 
     @Override
-    protected boolean isValueValid(List<MobEffect> value) {
+    protected boolean isValueValid(List<StatusEffect> value) {
         return true;
     }
 
     @Override
     public Iterable<Identifier> getIdentifierSuggestions() {
-        return BuiltInRegistries.MOB_EFFECT.keySet();
+        return Registries.STATUS_EFFECT.getIds();
     }
 
     @Override
-    public CompoundTag save(CompoundTag tag) {
-        ListTag valueTag = new ListTag();
+    public NbtCompound save(NbtCompound tag) {
+        NbtList valueTag = new NbtList();
 
-        for (MobEffect effect : get()) {
-            Identifier id = BuiltInRegistries.MOB_EFFECT.getKey(effect);
-            if (id != null) valueTag.add(StringTag.valueOf(id.toString()));
+        for (StatusEffect effect : get()) {
+            Identifier id = Registries.STATUS_EFFECT.getId(effect);
+            if (id != null) valueTag.add(NbtString.of(id.toString()));
         }
         tag.put("value", valueTag);
 
@@ -68,23 +67,23 @@ public class StatusEffectListSetting extends Setting<List<MobEffect>> {
     }
 
     @Override
-    public List<MobEffect> load(CompoundTag tag) {
+    public List<StatusEffect> load(NbtCompound tag) {
         get().clear();
 
-        for (Tag tagI : tag.getListOrEmpty("value")) {
-            MobEffect effect = BuiltInRegistries.MOB_EFFECT.getValue(Identifier.parse(tagI.asString().orElse("")));
+        for (NbtElement tagI : tag.getListOrEmpty("value")) {
+            StatusEffect effect = Registries.STATUS_EFFECT.get(Identifier.of(tagI.asString().orElse("")));
             if (effect != null) get().add(effect);
         }
 
         return get();
     }
 
-    public static class Builder extends SettingBuilder<Builder, List<MobEffect>, StatusEffectListSetting> {
+    public static class Builder extends SettingBuilder<Builder, List<StatusEffect>, StatusEffectListSetting> {
         public Builder() {
             super(new ArrayList<>(0));
         }
 
-        public Builder defaultValue(MobEffect... defaults) {
+        public Builder defaultValue(StatusEffect... defaults) {
             return defaultValue(defaults != null ? Arrays.asList(defaults) : new ArrayList<>());
         }
 

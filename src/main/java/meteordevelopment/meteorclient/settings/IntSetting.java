@@ -5,7 +5,7 @@
 
 package meteordevelopment.meteorclient.settings;
 
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 
 import java.util.function.Consumer;
 
@@ -28,7 +28,7 @@ public class IntSetting extends Setting<Integer> {
     protected Integer parseImpl(String str) {
         try {
             return Integer.parseInt(str.trim());
-        } catch (NumberFormatException _) {
+        } catch (NumberFormatException ignored) {
             return null;
         }
     }
@@ -39,15 +39,15 @@ public class IntSetting extends Setting<Integer> {
     }
 
     @Override
-    public CompoundTag save(CompoundTag tag) {
+    public NbtCompound save(NbtCompound tag) {
         tag.putInt("value", get());
 
         return tag;
     }
 
     @Override
-    public Integer load(CompoundTag tag) {
-        set(tag.getIntOr("value", 0));
+    public Integer load(NbtCompound tag) {
+        set(tag.getInt("value", 0));
 
         return get();
     }

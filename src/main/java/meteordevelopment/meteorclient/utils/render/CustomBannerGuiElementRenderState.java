@@ -5,36 +5,36 @@
 
 package meteordevelopment.meteorclient.utils.render;
 
-import net.minecraft.client.gui.navigation.ScreenRectangle;
-import net.minecraft.client.model.object.banner.BannerFlagModel;
-import net.minecraft.client.renderer.state.gui.pip.PictureInPictureRenderState;
-import net.minecraft.world.item.DyeColor;
-import net.minecraft.world.level.block.entity.BannerPatternLayers;
+import net.minecraft.client.gui.ScreenRect;
+import net.minecraft.client.gui.render.state.special.SpecialGuiElementRenderState;
+import net.minecraft.client.render.block.entity.model.BannerFlagBlockModel;
+import net.minecraft.component.type.BannerPatternsComponent;
+import net.minecraft.util.DyeColor;
 import org.jetbrains.annotations.Nullable;
 
 public record CustomBannerGuiElementRenderState(
-    BannerFlagModel flag,
+    BannerFlagBlockModel flag,
     DyeColor baseColor,
-    BannerPatternLayers resultBannerPatterns,
-    int x0,
-    int y0,
+    BannerPatternsComponent resultBannerPatterns,
     int x1,
     int y1,
-    @Nullable ScreenRectangle scissorArea,
-    @Nullable ScreenRectangle bounds,
+    int x2,
+    int y2,
+    @Nullable ScreenRect scissorArea,
+    @Nullable ScreenRect bounds,
     float scale
-) implements PictureInPictureRenderState {
+) implements SpecialGuiElementRenderState {
     public CustomBannerGuiElementRenderState(
-        BannerFlagModel bannerFlagBlockModel,
+        BannerFlagBlockModel bannerFlagBlockModel,
         DyeColor color,
-        BannerPatternLayers bannerPatterns,
-        int x0,
-        int y0,
+        BannerPatternsComponent bannerPatterns,
         int x1,
         int y1,
-        @Nullable ScreenRectangle scissorArea,
+        int x2,
+        int y2,
+        @Nullable ScreenRect scissorArea,
         float scale
     ) {
-        this(bannerFlagBlockModel, color, bannerPatterns, x0, y0, x1, y1, scissorArea, PictureInPictureRenderState.getBounds(x0, y0, x1, y1, scissorArea), scale);
+        this(bannerFlagBlockModel, color, bannerPatterns, x1, y1, x2, y2, scissorArea, SpecialGuiElementRenderState.createBounds(x1, y1, x2, y2, scissorArea), scale);
     }
 }

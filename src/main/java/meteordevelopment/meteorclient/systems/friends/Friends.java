@@ -10,10 +10,10 @@ import meteordevelopment.meteorclient.systems.System;
 import meteordevelopment.meteorclient.systems.Systems;
 import meteordevelopment.meteorclient.utils.misc.NbtUtils;
 import meteordevelopment.meteorclient.utils.network.MeteorExecutor;
-import net.minecraft.client.multiplayer.PlayerInfo;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.client.network.PlayerListEntry;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -61,23 +61,23 @@ public class Friends extends System<Friends> implements Iterable<Friend> {
         return null;
     }
 
-    public Friend get(Player player) {
+    public Friend get(PlayerEntity player) {
         return get(player.getName().getString());
     }
 
-    public Friend get(PlayerInfo player) {
+    public Friend get(PlayerListEntry player) {
         return get(player.getProfile().name());
     }
 
-    public boolean isFriend(Player player) {
+    public boolean isFriend(PlayerEntity player) {
         return player != null && get(player) != null;
     }
 
-    public boolean isFriend(PlayerInfo player) {
+    public boolean isFriend(PlayerListEntry player) {
         return get(player) != null;
     }
 
-    public boolean shouldAttack(Player player) {
+    public boolean shouldAttack(PlayerEntity player) {
         return !isFriend(player);
     }
 
@@ -95,8 +95,8 @@ public class Friends extends System<Friends> implements Iterable<Friend> {
     }
 
     @Override
-    public CompoundTag toTag() {
-        CompoundTag tag = new CompoundTag();
+    public NbtCompound toTag() {
+        NbtCompound tag = new NbtCompound();
 
         tag.put("friends", NbtUtils.listToTag(friends));
 
@@ -104,17 +104,17 @@ public class Friends extends System<Friends> implements Iterable<Friend> {
     }
 
     @Override
-    public Friends fromTag(CompoundTag tag) {
+    public Friends fromTag(NbtCompound tag) {
         friends.clear();
 
-        for (Tag itemTag : tag.getListOrEmpty("friends")) {
-            CompoundTag friendTag = (CompoundTag) itemTag;
+        for (NbtElement itemTag : tag.getListOrEmpty("friends")) {
+            NbtCompound friendTag = (NbtCompound) itemTag;
             if (!friendTag.contains("name")) continue;
 
-            String name = friendTag.getStringOr("name", "");
+            String name = friendTag.getString("name", "");
             if (get(name) != null) continue;
 
-            String uuid = friendTag.getStringOr("id", "");
+            String uuid = friendTag.getString("id", "");
             Friend friend = !uuid.isBlank()
                 ? new Friend(name, UndashedUuid.fromStringLenient(uuid))
                 : new Friend(name);

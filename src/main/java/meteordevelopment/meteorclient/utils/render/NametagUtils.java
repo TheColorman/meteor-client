@@ -9,8 +9,8 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import meteordevelopment.meteorclient.systems.modules.Modules;
 import meteordevelopment.meteorclient.systems.modules.render.Zoom;
 import meteordevelopment.meteorclient.utils.Utils;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.util.Mth;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.util.math.MathHelper;
 import org.joml.*;
 
 import static meteordevelopment.meteorclient.MeteorClient.mc;
@@ -30,15 +30,15 @@ public class NametagUtils {
     private NametagUtils() {
     }
 
-    public static void onRender(Matrix4fc modelView) {
+    public static void onRender(Matrix4f modelView) {
         model.set(modelView);
         NametagUtils.projection.set(RenderUtils.projection);
 
-        Utils.set(camera, mc.gameRenderer.getMainCamera().position());
+        Utils.set(camera, mc.gameRenderer.getCamera().getCameraPos());
         cameraNegated.set(camera);
         cameraNegated.negate();
 
-        windowScale = mc.getWindow().calculateScale(1, false);
+        windowScale = mc.getWindow().calculateScaleFactor(1, false);
     }
 
     public static boolean to2D(Vector3d pos, double scale) {
@@ -66,17 +66,17 @@ public class NametagUtils {
         if (behind && !allowBehind) return false;
 
         toScreen(pmMat4);
-        double x = pmMat4.x * mc.getWindow().getWidth();
-        double y = pmMat4.y * mc.getWindow().getHeight();
+        double x = pmMat4.x * mc.getWindow().getFramebufferWidth();
+        double y = pmMat4.y * mc.getWindow().getFramebufferHeight();
 
         if (behind) {
-            x = mc.getWindow().getWidth() - x;
-            y = mc.getWindow().getHeight() - y;
+            x = mc.getWindow().getFramebufferWidth() - x;
+            y = mc.getWindow().getFramebufferHeight() - y;
         }
 
         if (Double.isInfinite(x) || Double.isInfinite(y)) return false;
 
-        pos.set(x / windowScale, mc.getWindow().getHeight() - y / windowScale, allowBehind ? pmMat4.w : pmMat4.z);
+        pos.set(x / windowScale, mc.getWindow().getFramebufferHeight() - y / windowScale, allowBehind ? pmMat4.w : pmMat4.z);
         return true;
     }
 
@@ -85,12 +85,12 @@ public class NametagUtils {
         begin(matrices, pos);
     }
 
-    public static void begin(Vector3d pos, GuiGraphicsExtractor graphics) {
+    public static void begin(Vector3d pos, DrawContext drawContext) {
         begin(pos);
 
-        Matrix3x2fStack matrices = graphics.pose();
+        Matrix3x2fStack matrices = drawContext.getMatrices();
         matrices.pushMatrix();
-        matrices.scale(1.0f / mc.getWindow().getGuiScale());
+        matrices.scale(1.0f / mc.getWindow().getScaleFactor());
         matrices.translate((float) pos.x, (float) pos.y);
         matrices.scale((float) scale, (float) scale);
     }
@@ -105,14 +105,14 @@ public class NametagUtils {
         RenderSystem.getModelViewStack().popMatrix();
     }
 
-    public static void end(GuiGraphicsExtractor graphics) {
+    public static void end(DrawContext drawContext) {
         end();
-        graphics.pose().popMatrix();
+        drawContext.getMatrices().popMatrix();
     }
 
     private static double getScale(Vector3d pos) {
         double dist = camera.distance(pos);
-        return Mth.clamp(1 - dist * 0.01, 0.5, Integer.MAX_VALUE);
+        return MathHelper.clamp(1 - dist * 0.01, 0.5, Integer.MAX_VALUE);
     }
 
     private static void toScreen(Vector4f vec) {

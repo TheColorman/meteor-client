@@ -5,21 +5,21 @@
 
 package meteordevelopment.meteorclient.utils.render;
 
-import com.mojang.blaze3d.vertex.ByteBufferBuilder;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.util.BufferAllocator;
 
-public class CustomOutlineVertexConsumerProvider implements MultiBufferSource {
-    private final MultiBufferSource.BufferSource immediate = MultiBufferSource.immediate(new ByteBufferBuilder(1536));
+public class CustomOutlineVertexConsumerProvider implements VertexConsumerProvider {
+    private final VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(new BufferAllocator(1536));
 
     @Override
-    public VertexConsumer getBuffer(RenderType layer) {
+    public VertexConsumer getBuffer(RenderLayer layer) {
         if (layer.isOutline()) {
             return new CustomVertexConsumer(this.immediate.getBuffer(layer));
         }
 
-        var optional = layer.outline();
+        var optional = layer.getAffectedOutline();
         if (optional.isPresent()) {
             return new CustomVertexConsumer(this.immediate.getBuffer(optional.get()));
         }
@@ -28,51 +28,51 @@ public class CustomOutlineVertexConsumerProvider implements MultiBufferSource {
     }
 
     public void draw() {
-        immediate.endBatch();
+        immediate.draw();
     }
 
     private record CustomVertexConsumer(VertexConsumer consumer) implements VertexConsumer {
         @Override
-        public VertexConsumer addVertex(float x, float y, float z) {
-            consumer.addVertex(x, y, z);
+        public VertexConsumer vertex(float x, float y, float z) {
+            consumer.vertex(x, y, z);
             return this;
         }
 
         @Override
-        public VertexConsumer setColor(int red, int green, int blue, int alpha) {
-            consumer.setColor(red, green, blue, alpha);
+        public VertexConsumer color(int red, int green, int blue, int alpha) {
+            consumer.color(red, green, blue, alpha);
             return this;
         }
 
         @Override
-        public VertexConsumer setColor(int argb) {
-            consumer.setColor(argb);
+        public VertexConsumer color(int argb) {
+            consumer.color(argb);
             return this;
         }
 
         @Override
-        public VertexConsumer setUv(float u, float v) {
-            consumer.setUv(u, v);
+        public VertexConsumer texture(float u, float v) {
+            consumer.texture(u, v);
             return this;
         }
 
         @Override
-        public VertexConsumer setUv1(int u, int v) {
+        public VertexConsumer overlay(int u, int v) {
             return this;
         }
 
         @Override
-        public VertexConsumer setUv2(int u, int v) {
+        public VertexConsumer light(int u, int v) {
             return this;
         }
 
         @Override
-        public VertexConsumer setNormal(float x, float y, float z) {
+        public VertexConsumer normal(float x, float y, float z) {
             return this;
         }
 
         @Override
-        public VertexConsumer setLineWidth(float width) {
+        public VertexConsumer lineWidth(float width) {
             return this;
         }
     }

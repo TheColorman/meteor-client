@@ -7,30 +7,30 @@ package meteordevelopment.meteorclient.mixin;
 
 import meteordevelopment.meteorclient.systems.modules.Modules;
 import meteordevelopment.meteorclient.systems.modules.world.AutoBrewer;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.gui.screens.inventory.BrewingStandScreen;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.inventory.BrewingStandMenu;
+import net.minecraft.client.gui.screen.ingame.BrewingStandScreen;
+import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.screen.BrewingStandScreenHandler;
+import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Mixin;
 
 @Mixin(BrewingStandScreen.class)
-public abstract class BrewingStandScreenMixin extends AbstractContainerScreen<BrewingStandMenu> {
-    public BrewingStandScreenMixin(BrewingStandMenu container, Inventory playerInventory, Component name) {
+public abstract class BrewingStandScreenMixin extends HandledScreen<BrewingStandScreenHandler> {
+    public BrewingStandScreenMixin(BrewingStandScreenHandler container, PlayerInventory playerInventory, Text name) {
         super(container, playerInventory, name);
     }
 
     @Override
-    public void containerTick() {
-        super.containerTick();
+    public void handledScreenTick() {
+        super.handledScreenTick();
 
-        if (Modules.get().isActive(AutoBrewer.class)) Modules.get().get(AutoBrewer.class).tick(menu);
+        if (Modules.get().isActive(AutoBrewer.class)) Modules.get().get(AutoBrewer.class).tick(handler);
     }
 
     @Override
-    public void onClose() {
+    public void close() {
         if (Modules.get().isActive(AutoBrewer.class)) Modules.get().get(AutoBrewer.class).onBrewingStandClose();
 
-        super.onClose();
+        super.close();
     }
 }

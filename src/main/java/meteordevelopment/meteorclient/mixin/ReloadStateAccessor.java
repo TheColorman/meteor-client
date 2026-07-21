@@ -5,11 +5,11 @@
 
 package meteordevelopment.meteorclient.mixin;
 
-import net.minecraft.client.ResourceLoadStateTracker;
+import net.minecraft.client.resource.ResourceReloadLogger;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(ResourceLoadStateTracker.ReloadState.class)
+@Mixin(ResourceReloadLogger.ReloadState.class)
 public interface ReloadStateAccessor {
     @Accessor("finished")
     boolean meteor$isFinished();

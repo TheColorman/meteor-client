@@ -6,12 +6,12 @@
 package meteordevelopment.meteorclient.renderer.text;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.ByteBufferBuilder;
-import com.mojang.blaze3d.vertex.PoseStack;
 import meteordevelopment.meteorclient.utils.render.color.Color;
-import net.minecraft.client.gui.Font.DisplayMode;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.util.LightCoordsUtil;
+import net.minecraft.client.font.TextRenderer.TextLayerType;
+import net.minecraft.client.render.LightmapTextureManager;
+import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.util.BufferAllocator;
+import net.minecraft.client.util.math.MatrixStack;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 
@@ -20,10 +20,10 @@ import static meteordevelopment.meteorclient.MeteorClient.mc;
 public class VanillaTextRenderer implements TextRenderer {
     public static final VanillaTextRenderer INSTANCE = new VanillaTextRenderer();
 
-    private final ByteBufferBuilder buffer = new ByteBufferBuilder(2048);
-    private final MultiBufferSource.BufferSource immediate = MultiBufferSource.immediate(buffer);
+    private final BufferAllocator buffer = new BufferAllocator(2048);
+    private final VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(buffer);
 
-    private final PoseStack matrices = new PoseStack();
+    private final MatrixStack matrices = new MatrixStack();
     private final Matrix4f emptyMatrix = new Matrix4f();
 
     public double scale = 2;
@@ -46,12 +46,12 @@ public class VanillaTextRenderer implements TextRenderer {
         if (text.isEmpty()) return 0;
 
         if (length != text.length()) text = text.substring(0, length);
-        return (mc.font.width(text) + (shadow ? 1 : 0)) * scale;
+        return (mc.textRenderer.getWidth(text) + (shadow ? 1 : 0)) * scale;
     }
 
     @Override
     public double getHeight(boolean shadow) {
-        return (mc.font.lineHeight + (shadow ? 1 : 0)) * scale;
+        return (mc.textRenderer.fontHeight + (shadow ? 1 : 0)) * scale;
     }
 
     @Override
@@ -75,15 +75,15 @@ public class VanillaTextRenderer implements TextRenderer {
 
         Matrix4f matrix = emptyMatrix;
         if (scaleIndividually) {
-            matrices.pushPose();
+            matrices.push();
             matrices.scale((float) scale, (float) scale, 1);
-            matrix = matrices.last().pose();
+            matrix = matrices.peek().getPositionMatrix();
         }
 
-        mc.font.drawInBatch(text, (float) (x / scale), (float) (y / scale), color.getPacked(), shadow, matrix, immediate, DisplayMode.NORMAL, 0, LightCoordsUtil.FULL_BRIGHT);
-        double x2 = (x / scale) + mc.font.width(text);
+        mc.textRenderer.draw(text, (float) (x / scale), (float) (y / scale), color.getPacked(), shadow, matrix, immediate, TextLayerType.NORMAL, 0, LightmapTextureManager.MAX_LIGHT_COORDINATE);
+        double x2 = (x / scale) + mc.textRenderer.getWidth(text);
 
-        if (scaleIndividually) matrices.popPose();
+        if (scaleIndividually) matrices.pop();
 
         color.a = preA;
 
@@ -105,7 +105,7 @@ public class VanillaTextRenderer implements TextRenderer {
         matrixStack.pushMatrix();
         if (!scaleIndividually) matrixStack.scale((float) scale, (float) scale, 1);
 
-        immediate.endBatch();
+        immediate.draw();
 
         matrixStack.popMatrix();
 

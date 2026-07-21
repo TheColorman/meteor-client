@@ -9,15 +9,15 @@ import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.TagParser;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.StringNbtReader;
 
 import java.util.Collection;
 import java.util.List;
 
-import static net.minecraft.nbt.TagParser.ERROR_EXPECTED_COMPOUND;
+import static net.minecraft.nbt.StringNbtReader.EXPECTED_COMPOUND;
 
-public class CompoundNbtTagArgumentType implements ArgumentType<CompoundTag> {
+public class CompoundNbtTagArgumentType implements ArgumentType<NbtCompound> {
     private static final CompoundNbtTagArgumentType INSTANCE = new CompoundNbtTagArgumentType();
     private static final Collection<String> EXAMPLES = List.of("{foo:bar}", "{foo:[aa, bb],bar:15}");
 
@@ -25,25 +25,25 @@ public class CompoundNbtTagArgumentType implements ArgumentType<CompoundTag> {
         return INSTANCE;
     }
 
-    public static CompoundTag get(CommandContext<?> context) {
-        return context.getArgument("nbt", CompoundTag.class);
+    public static NbtCompound get(CommandContext<?> context) {
+        return context.getArgument("nbt", NbtCompound.class);
     }
 
-    private CompoundNbtTagArgumentType() {
-    }
+    private CompoundNbtTagArgumentType() {}
 
     @Override
-    public CompoundTag parse(StringReader reader) throws CommandSyntaxException {
+    public NbtCompound parse(StringReader reader) throws CommandSyntaxException {
         reader.skipWhitespace();
         if (!reader.canRead()) {
-            throw ERROR_EXPECTED_COMPOUND.createWithContext(reader);
+            throw EXPECTED_COMPOUND.createWithContext(reader);
         }
         StringBuilder b = new StringBuilder();
         int open = 0;
         while (reader.canRead()) {
             if (reader.peek() == '{') {
                 open++;
-            } else if (reader.peek() == '}') {
+            }
+            else if (reader.peek() == '}') {
                 open--;
             }
             if (open == 0)
@@ -52,9 +52,9 @@ public class CompoundNbtTagArgumentType implements ArgumentType<CompoundTag> {
         }
         reader.expect('}');
         b.append('}');
-        return TagParser.parseCompoundFully(b.toString()
-            .replace("$", "§")
-            .replace("§§", "$")
+        return StringNbtReader.readCompound(b.toString()
+                .replace("$", "§")
+                .replace("§§", "$")
         );
     }
 

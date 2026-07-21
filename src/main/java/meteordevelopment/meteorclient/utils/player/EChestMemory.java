@@ -11,17 +11,17 @@ import meteordevelopment.meteorclient.events.game.OpenScreenEvent;
 import meteordevelopment.meteorclient.events.world.BlockActivateEvent;
 import meteordevelopment.meteorclient.utils.PreInit;
 import meteordevelopment.orbit.EventHandler;
-import net.minecraft.client.gui.screens.inventory.ContainerScreen;
-import net.minecraft.core.NonNullList;
-import net.minecraft.world.Container;
-import net.minecraft.world.inventory.ChestMenu;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.EnderChestBlock;
+import net.minecraft.block.EnderChestBlock;
+import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
+import net.minecraft.inventory.Inventory;
+import net.minecraft.item.ItemStack;
+import net.minecraft.screen.GenericContainerScreenHandler;
+import net.minecraft.util.collection.DefaultedList;
 
 import static meteordevelopment.meteorclient.MeteorClient.mc;
 
 public class EChestMemory {
-    public static final NonNullList<ItemStack> ITEMS = NonNullList.withSize(27, ItemStack.EMPTY);
+    public static final DefaultedList<ItemStack> ITEMS = DefaultedList.ofSize(27, ItemStack.EMPTY);
     private static int echestOpenedState;
     private static boolean isKnown = false;
 
@@ -40,19 +40,19 @@ public class EChestMemory {
 
     @EventHandler
     private static void onOpenScreenEvent(OpenScreenEvent event) {
-        if (echestOpenedState == 1 && event.screen instanceof ContainerScreen) {
+        if (echestOpenedState == 1 && event.screen instanceof GenericContainerScreen) {
             echestOpenedState = 2;
             return;
         }
         if (echestOpenedState == 0) return;
 
-        if (!(mc.screen instanceof ContainerScreen)) return;
-        ChestMenu container = ((ContainerScreen) mc.screen).getMenu();
+        if (!(mc.currentScreen instanceof GenericContainerScreen)) return;
+        GenericContainerScreenHandler container = ((GenericContainerScreen) mc.currentScreen).getScreenHandler();
         if (container == null) return;
-        Container inv = container.getContainer();
+        Inventory inv = container.getInventory();
 
         for (int i = 0; i < 27; i++) {
-            ITEMS.set(i, inv.getItem(i));
+            ITEMS.set(i, inv.getStack(i));
         }
         isKnown = true;
 

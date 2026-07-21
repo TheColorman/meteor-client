@@ -5,24 +5,24 @@
 
 package meteordevelopment.meteorclient.mixin;
 
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.level.material.Fluid;
-import net.minecraft.tags.TagKey;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.fluid.Fluid;
+import net.minecraft.registry.tag.TagKey;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(LivingEntity.class)
 public interface LivingEntityAccessor {
-    @Invoker("jumpInLiquid")
+    @Invoker("swimUpward")
     void meteor$swimUpwards(TagKey<Fluid> fluid);
 
     @Accessor("jumping")
     boolean meteor$isJumping();
 
-    @Accessor("noJumpDelay")
+    @Accessor("jumpingCooldown")
     int meteor$getJumpCooldown();
 
-    @Accessor("noJumpDelay")
+    @Accessor("jumpingCooldown")
     void meteor$setJumpCooldown(int cooldown);
 }

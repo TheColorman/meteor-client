@@ -7,11 +7,11 @@ package meteordevelopment.meteorclient.mixin;
 
 import it.unimi.dsi.fastutil.io.FastByteArrayOutputStream;
 import meteordevelopment.meteorclient.MeteorClient;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.inventory.BookEditScreen;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.ingame.BookEditScreen;
+import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.nbt.*;
-import net.minecraft.network.chat.Component;
+import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -31,90 +31,87 @@ import static meteordevelopment.meteorclient.MeteorClient.mc;
 
 @Mixin(BookEditScreen.class)
 public abstract class BookEditScreenMixin extends Screen {
-    @Shadow
-    @Final
-    private List<String> pages;
-    @Shadow
-    private int currentPage;
+    @Shadow @Final private List<String> pages;
+    @Shadow private int currentPage;
 
     @Shadow
-    protected abstract void updatePageContent();
+    protected abstract void updatePage();
 
     @Shadow
-    protected abstract void pageForward();
+    protected abstract void openNextPage();
 
     @Shadow
-    protected abstract void pageBack();
+    protected abstract void openPreviousPage();
 
-    public BookEditScreenMixin(Component title) {
+    public BookEditScreenMixin(Text title) {
         super(title);
     }
 
     @Inject(method = "init", at = @At("TAIL"))
-    private void onInit(CallbackInfo ci) {
-        addRenderableWidget(
-            new Button.Builder(Component.literal("Copy"), _ -> {
-                ListTag listTag = new ListTag();
-                pages.stream().map(StringTag::valueOf).forEach(listTag::add);
+    private void onInit(CallbackInfo info) {
+        addDrawableChild(
+            new ButtonWidget.Builder(Text.literal("Copy"), button -> {
+                NbtList listTag = new NbtList();
+                    pages.stream().map(NbtString::of).forEach(listTag::add);
 
-                CompoundTag tag = new CompoundTag();
-                tag.put("pages", listTag);
-                tag.putInt("currentPage", currentPage);
+                    NbtCompound tag = new NbtCompound();
+                    tag.put("pages", listTag);
+                    tag.putInt("currentPage", currentPage);
 
-                FastByteArrayOutputStream bytes = new FastByteArrayOutputStream();
-                DataOutputStream out = new DataOutputStream(bytes);
-                try {
-                    NbtIo.write(tag, out);
-                } catch (IOException e) {
-                    MeteorClient.LOG.error("Error writing the book to the output stream", e);
-                }
+                    FastByteArrayOutputStream bytes = new FastByteArrayOutputStream();
+                    DataOutputStream out = new DataOutputStream(bytes);
+                    try {
+                        NbtIo.write(tag, out);
+                    } catch (IOException e) {
+                        MeteorClient.LOG.error("Error writing the book to the output stream", e);
+                    }
 
-                try {
-                    GLFW.glfwSetClipboardString(mc.getWindow().handle(), Base64.getEncoder().encodeToString(bytes.array));
-                } catch (OutOfMemoryError exception) {
-                    GLFW.glfwSetClipboardString(mc.getWindow().handle(), exception.toString());
-                }
-            })
-                .pos(4, 4)
+                    try {
+                        GLFW.glfwSetClipboardString(mc.getWindow().getHandle(), Base64.getEncoder().encodeToString(bytes.array));
+                    } catch (OutOfMemoryError exception) {
+                        GLFW.glfwSetClipboardString(mc.getWindow().getHandle(), exception.toString());
+                    }
+                })
+                .position(4, 4)
                 .size(120, 20)
                 .build()
         );
 
-        addRenderableWidget(
-            new Button.Builder(Component.literal("Paste"), _ -> {
-                String clipboard = GLFW.glfwGetClipboardString(mc.getWindow().handle());
-                if (clipboard == null) return;
+        addDrawableChild(
+                new ButtonWidget.Builder(Text.literal("Paste"), button -> {
+                    String clipboard = GLFW.glfwGetClipboardString(mc.getWindow().getHandle());
+                    if (clipboard == null) return;
 
-                byte[] bytes;
-                try {
-                    bytes = Base64.getDecoder().decode(clipboard);
-                } catch (IllegalArgumentException _) {
-                    return;
-                }
-                DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes));
-
-                try {
-                    CompoundTag tag = NbtIo.readCompressed(in, NbtAccounter.unlimitedHeap());
-
-                    ListTag listTag = tag.getListOrEmpty("pages").copy();
-
-                    pages.clear();
-                    for (int i = 0; i < listTag.size(); ++i) {
-                        pages.add(listTag.getStringOr(i, ""));
+                    byte[] bytes;
+                    try {
+                        bytes = Base64.getDecoder().decode(clipboard);
+                    } catch (IllegalArgumentException ignored) {
+                        return;
                     }
+                    DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes));
 
-                    if (pages.isEmpty()) {
-                        pages.add("");
+                    try {
+                        NbtCompound tag = NbtIo.readCompressed(in, NbtSizeTracker.ofUnlimitedBytes());
+
+                        NbtList listTag = tag.getListOrEmpty("pages").copy();
+
+                        pages.clear();
+                        for(int i = 0; i < listTag.size(); ++i) {
+                            pages.add(listTag.getString(i, ""));
+                        }
+
+                        if (pages.isEmpty()) {
+                            pages.add("");
+                        }
+
+                        currentPage = tag.getInt("currentPage", 0);
+
+                        updatePage();
+                    } catch (IOException e) {
+                        MeteorClient.LOG.error("Error reading the data from your clipboard", e);
                     }
-
-                    currentPage = tag.getIntOr("currentPage", 0);
-
-                    updatePageContent();
-                } catch (IOException e) {
-                    MeteorClient.LOG.error("Error reading the data from your clipboard", e);
-                }
-            })
-                .pos(4, 4 + 20 + 2)
+                })
+                .position(4, 4 + 20 + 2)
                 .size(120, 20)
                 .build()
         );
@@ -124,8 +121,8 @@ public abstract class BookEditScreenMixin extends Screen {
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
         if (verticalAmount == 0) return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
 
-        if (verticalAmount < 0) this.pageForward(); // scroll down
-        else this.pageBack();                       // scroll up
+        if (verticalAmount < 0) this.openNextPage();    // scroll down
+        else this.openPreviousPage();                   // scroll up
         return true;
     }
 }

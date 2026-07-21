@@ -10,21 +10,21 @@ import meteordevelopment.meteorclient.mixininterface.ICapabilityTracker;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
-@Mixin(GlStateManager.BooleanState.class)
+@Mixin(GlStateManager.CapabilityTracker.class)
 public abstract class CapabilityTrackerMixin implements ICapabilityTracker {
     @Shadow
-    private boolean enabled;
+    private boolean state;
 
     @Shadow
-    public abstract void setEnabled(boolean enabled);
+    public abstract void setState(boolean state);
 
     @Override
     public boolean meteor$get() {
-        return enabled;
+        return state;
     }
 
     @Override
     public void meteor$set(boolean state) {
-        setEnabled(state);
+        setState(state);
     }
 }

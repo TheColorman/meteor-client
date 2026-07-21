@@ -10,14 +10,15 @@ import meteordevelopment.meteorclient.gui.screens.settings.base.CollectionListSe
 import meteordevelopment.meteorclient.gui.widgets.WWidget;
 import meteordevelopment.meteorclient.settings.Setting;
 import meteordevelopment.meteorclient.utils.misc.Names;
-import net.minecraft.core.particles.ParticleType;
-import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.particle.ParticleEffect;
+import net.minecraft.particle.ParticleType;
+import net.minecraft.registry.Registries;
 
 import java.util.List;
 
 public class ParticleTypeListSettingScreen extends CollectionListSettingScreen<ParticleType<?>> {
     public ParticleTypeListSettingScreen(GuiTheme theme, Setting<List<ParticleType<?>>> setting) {
-        super(theme, "Select Particles", setting, setting.get(), BuiltInRegistries.PARTICLE_TYPE);
+        super(theme, "Select Particles", setting, setting.get(), Registries.PARTICLE_TYPE);
     }
 
     @Override
@@ -29,7 +30,7 @@ public class ParticleTypeListSettingScreen extends CollectionListSettingScreen<P
     protected String[] getValueNames(ParticleType<?> value) {
         return new String[]{
             Names.get(value),
-            BuiltInRegistries.PARTICLE_TYPE.getKey(value).toString()
+            Registries.PARTICLE_TYPE.getId(value).toString()
         };
     }
 }

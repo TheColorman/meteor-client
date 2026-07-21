@@ -20,12 +20,12 @@ import meteordevelopment.meteorclient.settings.EntityTypeListSetting;
 import meteordevelopment.meteorclient.utils.Utils;
 import meteordevelopment.meteorclient.utils.misc.Names;
 import meteordevelopment.meteorclient.utils.render.DisplayItemUtils;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.util.Tuple;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.entity.EntityType;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.registry.Registries;
+import net.minecraft.util.Pair;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -75,7 +75,7 @@ public class EntityTypeListSettingScreen extends WindowScreen {
 
         for (EntityType<?> entityType : setting.get()) {
             if (setting.filter == null || setting.filter.test(entityType)) {
-                switch (entityType.getCategory()) {
+                switch (entityType.getSpawnGroup()) {
                     case CREATURE -> hasAnimal++;
                     case WATER_AMBIENT, WATER_CREATURE, UNDERGROUND_WATER_CREATURE, AXOLOTLS -> hasWaterAnimal++;
                     case MONSTER -> hasMonster++;
@@ -137,13 +137,13 @@ public class EntityTypeListSettingScreen extends WindowScreen {
         Cell<WSection> miscCell = add(misc).expandX();
         miscT = misc.add(theme.table()).expandX().widget();
 
-        var spawnEggItems = BuiltInRegistries.ITEM.stream()
-            .filter(item -> item.builtInRegistryHolder().areComponentsBound() && item.components().has(DataComponents.ENTITY_DATA))
+        var spawnEggItems = Registries.ITEM.stream()
+            .filter(item -> item.builtInRegistryHolder().areComponentsBound() && item.getComponents().contains(DataComponentTypes.ENTITY_DATA))
             .toList();
 
         Consumer<EntityType<?>> entityTypeForEach = entityType -> {
             if (setting.filter == null || setting.filter.test(entityType)) {
-                switch (entityType.getCategory()) {
+                switch (entityType.getSpawnGroup()) {
                     case CREATURE -> {
                         animalsE.add(entityType);
                         addEntityType(animalsT, animalsC, entityType, spawnEggItems);
@@ -170,17 +170,17 @@ public class EntityTypeListSettingScreen extends WindowScreen {
 
         // Sort all entities
         if (filterText.isEmpty()) {
-            BuiltInRegistries.ENTITY_TYPE.forEach(entityTypeForEach);
+            Registries.ENTITY_TYPE.forEach(entityTypeForEach);
         } else {
-            List<Tuple<EntityType<?>, Integer>> entities = new ArrayList<>();
-            BuiltInRegistries.ENTITY_TYPE.forEach(entity -> {
+            List<Pair<EntityType<?>, Integer>> entities = new ArrayList<>();
+            Registries.ENTITY_TYPE.forEach(entity -> {
                 int words = Utils.searchInWords(Names.get(entity), filterText);
                 int diff = Utils.searchLevenshteinDefault(Names.get(entity), filterText, false);
 
-                if (words > 0 || diff < Names.get(entity).length() / 2) entities.add(new Tuple<>(entity, -diff));
+                if (words > 0 || diff < Names.get(entity).length() / 2) entities.add(new Pair<>(entity, -diff));
             });
-            entities.sort(Comparator.comparingInt(value -> -value.getB()));
-            for (Tuple<EntityType<?>, Integer> pair : entities) entityTypeForEach.accept(pair.getA());
+            entities.sort(Comparator.comparingInt(value -> -value.getRight()));
+            for (Pair<EntityType<?>, Integer> pair : entities) entityTypeForEach.accept(pair.getLeft());
         }
 
         if (animalsT.cells.isEmpty()) list.cells.remove(animalsCell);
@@ -198,7 +198,8 @@ public class EntityTypeListSettingScreen extends WindowScreen {
                 if (!monstersT.cells.isEmpty()) monsters.setExpanded(true);
                 if (!ambientT.cells.isEmpty()) ambient.setExpanded(true);
                 if (!miscT.cells.isEmpty()) misc.setExpanded(true);
-            } else {
+            }
+            else {
                 if (!animalsT.cells.isEmpty()) animals.setExpanded(false);
                 if (!waterAnimalsT.cells.isEmpty()) waterAnimals.setExpanded(false);
                 if (!monstersT.cells.isEmpty()) monsters.setExpanded(false);
@@ -235,10 +236,10 @@ public class EntityTypeListSettingScreen extends WindowScreen {
         ItemStack stack = null;
 
         for (var item : spawnEggItems) {
-            var component = item.components().get(DataComponents.ENTITY_DATA);
+            var component = item.getComponents().get(DataComponentTypes.ENTITY_DATA);
 
             //noinspection DataFlowIssue
-            if (component.type() == entityType) {
+            if (component.getType() == entityType) {
                 stack = DisplayItemUtils.toStack(item);
                 break;
             }
@@ -263,7 +264,7 @@ public class EntityTypeListSettingScreen extends WindowScreen {
         a.action = () -> {
             if (a.checked) {
                 setting.get().add(entityType);
-                switch (entityType.getCategory()) {
+                switch (entityType.getSpawnGroup()) {
                     case CREATURE -> {
                         if (hasAnimal == 0) tableCheckbox.checked = true;
                         hasAnimal++;
@@ -287,7 +288,7 @@ public class EntityTypeListSettingScreen extends WindowScreen {
                 }
             } else {
                 if (setting.get().remove(entityType)) {
-                    switch (entityType.getCategory()) {
+                    switch (entityType.getSpawnGroup()) {
                         case CREATURE -> {
                             hasAnimal--;
                             if (hasAnimal == 0) tableCheckbox.checked = false;

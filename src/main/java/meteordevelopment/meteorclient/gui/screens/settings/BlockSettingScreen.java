@@ -14,9 +14,9 @@ import meteordevelopment.meteorclient.gui.widgets.pressable.WButton;
 import meteordevelopment.meteorclient.settings.BlockSetting;
 import meteordevelopment.meteorclient.utils.misc.Names;
 import meteordevelopment.meteorclient.utils.render.DisplayItemUtils;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
+import net.minecraft.block.Block;
+import net.minecraft.block.Blocks;
+import net.minecraft.registry.Registries;
 import org.apache.commons.lang3.Strings;
 
 public class BlockSettingScreen extends WindowScreen {
@@ -50,7 +50,7 @@ public class BlockSettingScreen extends WindowScreen {
     }
 
     private void initTable() {
-        for (Block block : BuiltInRegistries.BLOCK) {
+        for (Block block : Registries.BLOCK) {
             if (setting.filter != null && !setting.filter.test(block)) continue;
             if (skipValue(block)) continue;
 
@@ -61,7 +61,7 @@ public class BlockSettingScreen extends WindowScreen {
             WButton select = table.add(theme.button("Select")).expandCellX().right().widget();
             select.action = () -> {
                 setting.set(block);
-                onClose();
+                close();
             };
 
             table.row();
@@ -69,6 +69,6 @@ public class BlockSettingScreen extends WindowScreen {
     }
 
     protected boolean skipValue(Block value) {
-        return value == Blocks.AIR || BuiltInRegistries.BLOCK.getKey(value).getPath().endsWith("_wall_banner");
+        return value == Blocks.AIR || Registries.BLOCK.getId(value).getPath().endsWith("_wall_banner");
     }
 }

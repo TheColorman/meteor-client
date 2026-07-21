@@ -7,8 +7,8 @@ package meteordevelopment.meteorclient.settings;
 
 import meteordevelopment.meteorclient.utils.misc.NbtUtils;
 import meteordevelopment.meteorclient.utils.render.color.SettingColor;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +28,7 @@ public class ColorListSetting extends Setting<List<SettingColor>> {
                 String[] strs = colorStr.split(",");
                 colors.add(new SettingColor(Integer.parseInt(strs[0]), Integer.parseInt(strs[1]), Integer.parseInt(strs[2]), Integer.parseInt(strs[3])));
             }
-        } catch (IndexOutOfBoundsException | NumberFormatException _) {
+        } catch (IndexOutOfBoundsException | NumberFormatException ignored) {
         }
         return colors;
     }
@@ -48,18 +48,18 @@ public class ColorListSetting extends Setting<List<SettingColor>> {
     }
 
     @Override
-    protected CompoundTag save(CompoundTag tag) {
+    protected NbtCompound save(NbtCompound tag) {
         tag.put("value", NbtUtils.listToTag(get()));
 
         return tag;
     }
 
     @Override
-    protected List<SettingColor> load(CompoundTag tag) {
+    protected List<SettingColor> load(NbtCompound tag) {
         get().clear();
 
-        for (Tag e : tag.getListOrEmpty("value")) {
-            get().add(new SettingColor().fromTag((CompoundTag) e));
+        for (NbtElement e : tag.getListOrEmpty("value")) {
+            get().add(new SettingColor().fromTag((NbtCompound) e));
         }
 
         return get();

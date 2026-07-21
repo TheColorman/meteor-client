@@ -4,7 +4,7 @@ import meteordevelopment.meteorclient.renderer.MeshRenderer;
 import meteordevelopment.meteorclient.renderer.MeteorRenderPipelines;
 import meteordevelopment.meteorclient.systems.modules.Modules;
 import meteordevelopment.meteorclient.systems.modules.render.ESP;
-import net.minecraft.world.entity.Entity;
+import net.minecraft.entity.Entity;
 
 public class EntityOutlineShader extends EntityShader {
     private static ESP esp;

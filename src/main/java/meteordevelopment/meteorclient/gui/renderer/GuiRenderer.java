@@ -19,10 +19,10 @@ import meteordevelopment.meteorclient.utils.PostInit;
 import meteordevelopment.meteorclient.utils.misc.Pool;
 import meteordevelopment.meteorclient.utils.render.RenderUtils;
 import meteordevelopment.meteorclient.utils.render.color.Color;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.resources.Identifier;
-import net.minecraft.util.Mth;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.MathHelper;
 
 import java.util.List;
 
@@ -60,7 +60,7 @@ public class GuiRenderer {
     public WWidget tooltipWidget;
     private double tooltipAnimProgress;
 
-    private GuiGraphicsExtractor graphics;
+    private DrawContext drawContext;
 
     public static GuiTexture addTexture(Identifier id) {
         return TEXTURE_PACKER.add(id);
@@ -81,13 +81,13 @@ public class GuiRenderer {
         TEXTURE = TEXTURE_PACKER.pack();
     }
 
-    public void begin(GuiGraphicsExtractor graphics) {
-        this.graphics = graphics;
-        this.graphics.nextStratum();
+    public void begin(DrawContext drawContext) {
+        this.drawContext = drawContext;
+        this.drawContext.createNewRootLayer();
 
-        var matrices = graphics.pose();
+        var matrices = drawContext.getMatrices();
         matrices.pushMatrix();
-        matrices.scale(1.0f / mc.getWindow().getGuiScale());
+        matrices.scale(1.0f / mc.getWindow().getScaleFactor());
 
         scissorStart(0, 0, getWindowWidth(), getWindowHeight());
     }
@@ -98,8 +98,8 @@ public class GuiRenderer {
         for (Runnable task : postTasks) task.run();
         postTasks.clear();
 
-        graphics.pose().popMatrix();
-        graphics.nextStratum();
+        drawContext.getMatrices().popMatrix();
+        drawContext.createNewRootLayer();
     }
 
     public void beginRender() {
@@ -118,7 +118,7 @@ public class GuiRenderer {
         rTex.end();
 
         r.render();
-        rTex.render("u_Texture", TEXTURE.getTextureView(), TEXTURE.getSampler());
+        rTex.render("u_Texture", TEXTURE.getGlTextureView(), TEXTURE.getSampler());
 
         // Normal text
         theme.textRenderer().begin(theme.scale(1));
@@ -153,7 +153,7 @@ public class GuiRenderer {
         }
 
         scissorStack.push(scissorPool.get().set(x, y, width, height));
-        graphics.enableScissor((int) x, (int) y, (int) (x + width), (int) (y + height));
+        drawContext.enableScissor((int) x, (int) y, (int) (x + width), (int) (y + height));
 
         beginRender();
     }
@@ -167,15 +167,15 @@ public class GuiRenderer {
         for (Runnable task : scissor.postTasks) task.run();
         scissor.pop();
 
-        graphics.disableScissor();
+        drawContext.disableScissor();
         if (!scissorStack.isEmpty()) beginRender();
 
         scissorPool.free(scissor);
     }
 
-    public boolean renderTooltip(GuiGraphicsExtractor graphics, double mouseX, double mouseY, double delta) {
+    public boolean renderTooltip(DrawContext drawContext, double mouseX, double mouseY, double delta) {
         tooltipAnimProgress += (tooltip != null ? 1 : -1) * delta * 14;
-        tooltipAnimProgress = Mth.clamp(tooltipAnimProgress, 0, 1);
+        tooltipAnimProgress = MathHelper.clamp(tooltipAnimProgress, 0, 1);
 
         boolean toReturn = false;
 
@@ -188,16 +188,14 @@ public class GuiRenderer {
             double deltaX = -tooltipWidget.x + mouseX + 12;
             double deltaY = -tooltipWidget.y + mouseY + 12;
 
-            if (mouseX + 12 + tooltipWidget.width > getWindowWidth())
-                deltaX = -tooltipWidget.x + getWindowWidth() - tooltipWidget.width;
-            if (mouseY + 12 + tooltipWidget.height > getWindowHeight())
-                deltaY = -tooltipWidget.y + getWindowHeight() - tooltipWidget.height;
+            if (mouseX + 12 + tooltipWidget.width > getWindowWidth()) deltaX = -tooltipWidget.x + getWindowWidth() - tooltipWidget.width;
+            if (mouseY + 12 + tooltipWidget.height > getWindowHeight()) deltaY = -tooltipWidget.y + getWindowHeight() - tooltipWidget.height;
 
             tooltipWidget.move(deltaX, deltaY);
 
             setAlpha(tooltipAnimProgress);
 
-            begin(graphics);
+            begin(drawContext);
             tooltipWidget.render(this, mouseX, mouseY, delta);
             end();
 
@@ -225,19 +223,15 @@ public class GuiRenderer {
     public void quad(double x, double y, double width, double height, Color cTopLeft, Color cTopRight, Color cBottomRight, Color cBottomLeft) {
         r.quad(x, y, width, height, cTopLeft, cTopRight, cBottomRight, cBottomLeft);
     }
-
     public void quad(double x, double y, double width, double height, Color colorLeft, Color colorRight) {
         quad(x, y, width, height, colorLeft, colorRight, colorRight, colorLeft);
     }
-
     public void quad(double x, double y, double width, double height, Color color) {
         quad(x, y, width, height, color, color);
     }
-
     public void quad(WWidget widget, Color color) {
         quad(widget.x, widget.y, widget.width, widget.height, color);
     }
-
     public void quad(double x, double y, double width, double height, GuiTexture texture, Color color) {
         rTex.texQuad(x, y, width, height, texture.get(width, height), color);
     }
@@ -247,7 +241,7 @@ public class GuiRenderer {
     }
 
     public void triangle(double x1, double y1, double x2, double y2, double x3, double y3, Color color) {
-        r.triangle(x1, y1, x2, y2, x3, y3, color);
+        r.triangle(x1, y1, x2, y2, x3, y3 ,color);
     }
 
     public void text(String text, double x, double y, Color color, boolean title) {
@@ -260,7 +254,7 @@ public class GuiRenderer {
             rTex.texQuad(x, y, width, height, rotation, 0, 0, 1, 1, WHITE);
             rTex.end();
 
-            rTex.render(texture.getTextureView(), texture.getSampler());
+            rTex.render(texture.getGlTextureView(), texture.getSampler());
         });
     }
 
@@ -269,7 +263,7 @@ public class GuiRenderer {
     }
 
     public void item(ItemStack itemStack, int x, int y, float scale, boolean overlay) {
-        RenderUtils.drawItem(graphics, itemStack, x, y, scale, overlay, null, false);
+        RenderUtils.drawItem(drawContext, itemStack, x, y, scale, overlay, null, false);
     }
 
     public void absolutePost(Runnable task) {

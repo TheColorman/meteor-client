@@ -11,10 +11,10 @@ import meteordevelopment.meteorclient.gui.widgets.WRoot;
 import meteordevelopment.meteorclient.gui.widgets.containers.WVerticalList;
 import meteordevelopment.meteorclient.gui.widgets.containers.WView;
 import meteordevelopment.meteorclient.gui.widgets.pressable.WPressable;
-import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.input.CharacterEvent;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.util.Mth;
+import net.minecraft.client.gui.Click;
+import net.minecraft.client.input.CharInput;
+import net.minecraft.client.input.KeyInput;
+import net.minecraft.util.math.MathHelper;
 
 import static meteordevelopment.meteorclient.utils.Utils.getWindowHeight;
 
@@ -111,7 +111,7 @@ public abstract class WDropdown<T> extends WPressable {
         boolean render = super.render(renderer, mouseX, mouseY, delta);
 
         animProgress += (expanded ? 1 : -1) * delta * 14;
-        animProgress = Mth.clamp(animProgress, 0, 1);
+        animProgress = MathHelper.clamp(animProgress, 0, 1);
 
         WView view = getView();
         boolean rootInView = view == null || view.isWidgetInView(this);
@@ -135,7 +135,7 @@ public abstract class WDropdown<T> extends WPressable {
     // Events
 
     @Override
-    public boolean onMouseClicked(MouseButtonEvent click, boolean doubled) {
+    public boolean onMouseClicked(Click click, boolean doubled) {
         boolean used = false;
         if (!mouseOver && !root.mouseOver) expanded = false;
 
@@ -146,7 +146,7 @@ public abstract class WDropdown<T> extends WPressable {
     }
 
     @Override
-    public boolean onMouseReleased(MouseButtonEvent click) {
+    public boolean onMouseReleased(Click click) {
         if (super.onMouseReleased(click)) return true;
 
         return expanded && root.mouseReleased(click);
@@ -171,21 +171,21 @@ public abstract class WDropdown<T> extends WPressable {
     }
 
     @Override
-    public boolean onKeyPressed(KeyEvent input) {
+    public boolean onKeyPressed(KeyInput input) {
         if (super.onKeyPressed(input)) return true;
 
         return expanded && root.keyPressed(input);
     }
 
     @Override
-    public boolean onKeyRepeated(KeyEvent input) {
+    public boolean onKeyRepeated(KeyInput input) {
         if (super.onKeyRepeated(input)) return true;
 
         return expanded && root.keyRepeated(input);
     }
 
     @Override
-    public boolean onCharTyped(CharacterEvent input) {
+    public boolean onCharTyped(CharInput input) {
         if (super.onCharTyped(input)) return true;
 
         return expanded && root.charTyped(input);
@@ -195,8 +195,7 @@ public abstract class WDropdown<T> extends WPressable {
 
     protected abstract static class WDropdownRoot extends WVerticalList implements WRoot {
         @Override
-        public void invalidate() {
-        }
+        public void invalidate() {}
     }
 
     protected abstract class WDropdownValue extends WPressable {

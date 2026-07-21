@@ -5,13 +5,13 @@
 
 package meteordevelopment.meteorclient.utils.player;
 
-import meteordevelopment.meteorclient.mixininterface.IMultiPlayerGameMode;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ContainerInput;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.state.BlockState;
+import meteordevelopment.meteorclient.mixininterface.IClientPlayerInteractionManager;
+import net.minecraft.block.BlockState;
+import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.screen.ScreenHandler;
+import net.minecraft.screen.slot.SlotActionType;
 import org.jetbrains.annotations.Range;
 
 import java.util.function.Predicate;
@@ -39,7 +39,7 @@ public class InvUtils {
     }
 
     public static boolean testInMainHand(Predicate<ItemStack> predicate) {
-        return predicate.test(mc.player.getMainHandItem());
+        return predicate.test(mc.player.getMainHandStack());
     }
 
     public static boolean testInMainHand(Item... items) {
@@ -47,7 +47,7 @@ public class InvUtils {
     }
 
     public static boolean testInOffHand(Predicate<ItemStack> predicate) {
-        return predicate.test(mc.player.getOffhandItem());
+        return predicate.test(mc.player.getOffHandStack());
     }
 
     public static boolean testInOffHand(Item... items) {
@@ -66,7 +66,7 @@ public class InvUtils {
         if (testInHands(predicate)) return true;
 
         for (int i = SlotUtils.HOTBAR_START; i <= SlotUtils.HOTBAR_END; i++) {
-            ItemStack stack = mc.player.getInventory().getItem(i);
+            ItemStack stack = mc.player.getInventory().getStack(i);
             if (predicate.test(stack)) return true;
         }
 
@@ -89,11 +89,11 @@ public class InvUtils {
 
     public static FindItemResult findInHotbar(Predicate<ItemStack> isGood) {
         if (testInOffHand(isGood)) {
-            return new FindItemResult(SlotUtils.OFFHAND, mc.player.getOffhandItem().getCount());
+            return new FindItemResult(SlotUtils.OFFHAND, mc.player.getOffHandStack().getCount());
         }
 
         if (testInMainHand(isGood)) {
-            return new FindItemResult(mc.player.getInventory().getSelectedSlot(), mc.player.getMainHandItem().getCount());
+            return new FindItemResult(mc.player.getInventory().getSelectedSlot(), mc.player.getMainHandStack().getCount());
         }
 
         return find(isGood, 0, 8);
@@ -105,7 +105,7 @@ public class InvUtils {
 
     public static FindItemResult find(Predicate<ItemStack> isGood) {
         if (mc.player == null) return new FindItemResult(0, 0);
-        return find(isGood, 0, mc.player.getInventory().getContainerSize());
+        return find(isGood, 0, mc.player.getInventory().size());
     }
 
     public static FindItemResult find(Predicate<ItemStack> isGood, int start, int end) {
@@ -114,7 +114,7 @@ public class InvUtils {
         int slot = -1, count = 0;
 
         for (int i = start; i <= end; i++) {
-            ItemStack stack = mc.player.getInventory().getItem(i);
+            ItemStack stack = mc.player.getInventory().getStack(i);
 
             if (isGood.test(stack)) {
                 if (slot == -1) slot = i;
@@ -130,10 +130,10 @@ public class InvUtils {
         int slot = -1;
 
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = mc.player.getInventory().getItem(i);
-            if (!stack.isCorrectToolForDrops(state)) continue;
+            ItemStack stack = mc.player.getInventory().getStack(i);
+            if (!stack.isSuitableFor(state)) continue;
 
-            float score = stack.getDestroySpeed(state);
+            float score = stack.getMiningSpeedMultiplier(state);
             if (score > bestScore) {
                 bestScore = score;
                 slot = i;
@@ -152,7 +152,7 @@ public class InvUtils {
         else if (!swapBack) previousSlot = -1;
 
         mc.player.getInventory().setSelectedSlot(slot);
-        ((IMultiPlayerGameMode) mc.gameMode).meteor$syncSelected();
+        ((IClientPlayerInteractionManager) mc.interactionManager).meteor$syncSelected();
         return true;
     }
 
@@ -165,13 +165,13 @@ public class InvUtils {
     }
 
     public static Action move() {
-        ACTION.type = ContainerInput.PICKUP;
+        ACTION.type = SlotActionType.PICKUP;
         ACTION.two = true;
         return ACTION;
     }
 
     public static Action click() {
-        ACTION.type = ContainerInput.PICKUP;
+        ACTION.type = SlotActionType.PICKUP;
         return ACTION;
     }
 
@@ -180,34 +180,33 @@ public class InvUtils {
      * From should be the slot in the hotbar, to should be the slot you're switching an item from.
      */
     public static Action quickSwap() {
-        ACTION.type = ContainerInput.SWAP;
+        ACTION.type = SlotActionType.SWAP;
         return ACTION;
     }
 
     public static Action shiftClick() {
-        ACTION.type = ContainerInput.QUICK_MOVE;
+        ACTION.type = SlotActionType.QUICK_MOVE;
         return ACTION;
     }
 
     public static Action drop() {
-        ACTION.type = ContainerInput.THROW;
+        ACTION.type = SlotActionType.THROW;
         ACTION.data = 1;
         return ACTION;
     }
 
     public static Action dropOne() {
-        ACTION.type = ContainerInput.THROW;
+        ACTION.type = SlotActionType.THROW;
         ACTION.data = 0;
         return ACTION;
     }
 
     public static void dropHand() {
-        if (!mc.player.containerMenu.getCarried().isEmpty())
-            mc.gameMode.handleContainerInput(mc.player.containerMenu.containerId, AbstractContainerMenu.SLOT_CLICKED_OUTSIDE, 0, ContainerInput.PICKUP, mc.player);
+        if (!mc.player.currentScreenHandler.getCursorStack().isEmpty()) mc.interactionManager.clickSlot(mc.player.currentScreenHandler.syncId, ScreenHandler.EMPTY_SPACE_SLOT_INDEX, 0, SlotActionType.PICKUP, mc.player);
     }
 
     public static class Action {
-        private ContainerInput type = null;
+        private SlotActionType type = null;
         private boolean two = false;
         private int from = -1;
         private int to = -1;
@@ -320,9 +319,9 @@ public class InvUtils {
         // Other
 
         private void run() {
-            boolean hadEmptyCursor = mc.player.containerMenu.getCarried().isEmpty();
+            boolean hadEmptyCursor = mc.player.currentScreenHandler.getCursorStack().isEmpty();
 
-            if (type == ContainerInput.SWAP) {
+            if (type == SlotActionType.SWAP) {
                 data = from;
                 from = to;
             }
@@ -332,7 +331,7 @@ public class InvUtils {
                 if (two) click(to);
             }
 
-            ContainerInput preType = type;
+            SlotActionType preType = type;
             boolean preTwo = two;
             int preFrom = from;
             int preTo = to;
@@ -343,7 +342,7 @@ public class InvUtils {
             to = -1;
             data = 0;
 
-            if (!isRecursive && hadEmptyCursor && preType == ContainerInput.PICKUP && preTwo && (preFrom != -1 && preTo != -1) && !mc.player.containerMenu.getCarried().isEmpty()) {
+            if (!isRecursive && hadEmptyCursor && preType == SlotActionType.PICKUP && preTwo && (preFrom != -1 && preTo != -1) && !mc.player.currentScreenHandler.getCursorStack().isEmpty()) {
                 isRecursive = true;
                 InvUtils.click().slotId(preFrom);
                 isRecursive = false;
@@ -351,7 +350,7 @@ public class InvUtils {
         }
 
         private void click(int id) {
-            mc.gameMode.handleContainerInput(mc.player.containerMenu.containerId, id, data, type, mc.player);
+            mc.interactionManager.clickSlot(mc.player.currentScreenHandler.syncId, id, data, type, mc.player);
         }
     }
 }

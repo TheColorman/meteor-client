@@ -5,13 +5,13 @@
 
 package meteordevelopment.meteorclient.settings;
 
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
-import net.minecraft.resources.Identifier;
-import net.minecraft.sounds.SoundEvent;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtList;
+import net.minecraft.nbt.NbtString;
+import net.minecraft.registry.Registries;
+import net.minecraft.sound.SoundEvent;
+import net.minecraft.util.Identifier;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,11 +35,10 @@ public class SoundEventListSetting extends Setting<List<SoundEvent>> {
 
         try {
             for (String value : values) {
-                SoundEvent sound = parseId(BuiltInRegistries.SOUND_EVENT, value);
+                SoundEvent sound = parseId(Registries.SOUND_EVENT, value);
                 if (sound != null) sounds.add(sound);
             }
-        } catch (Exception _) {
-        }
+        } catch (Exception ignored) {}
 
         return sounds;
     }
@@ -51,15 +50,15 @@ public class SoundEventListSetting extends Setting<List<SoundEvent>> {
 
     @Override
     public Iterable<Identifier> getIdentifierSuggestions() {
-        return BuiltInRegistries.SOUND_EVENT.keySet();
+        return Registries.SOUND_EVENT.getIds();
     }
 
     @Override
-    public CompoundTag save(CompoundTag tag) {
-        ListTag valueTag = new ListTag();
+    public NbtCompound save(NbtCompound tag) {
+        NbtList valueTag = new NbtList();
         for (SoundEvent sound : get()) {
-            Identifier id = BuiltInRegistries.SOUND_EVENT.getKey(sound);
-            if (id != null) valueTag.add(StringTag.valueOf(id.toString()));
+            Identifier id = Registries.SOUND_EVENT.getId(sound);
+            if (id != null) valueTag.add(NbtString.of(id.toString()));
         }
         tag.put("value", valueTag);
 
@@ -67,11 +66,11 @@ public class SoundEventListSetting extends Setting<List<SoundEvent>> {
     }
 
     @Override
-    public List<SoundEvent> load(CompoundTag tag) {
+    public List<SoundEvent> load(NbtCompound tag) {
         get().clear();
 
-        for (Tag tagI : tag.getListOrEmpty("value")) {
-            SoundEvent soundEvent = BuiltInRegistries.SOUND_EVENT.getValue(Identifier.parse(tagI.asString().orElse("")));
+        for (NbtElement tagI : tag.getListOrEmpty("value")) {
+            SoundEvent soundEvent = Registries.SOUND_EVENT.get(Identifier.of(tagI.asString().orElse("")));
             if (soundEvent != null) get().add(soundEvent);
         }
 

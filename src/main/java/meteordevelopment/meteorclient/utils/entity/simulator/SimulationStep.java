@@ -5,7 +5,7 @@
 
 package meteordevelopment.meteorclient.utils.entity.simulator;
 
-import net.minecraft.world.phys.HitResult;
+import net.minecraft.util.hit.HitResult;
 
 public class SimulationStep {
     public static final SimulationStep MISS = new SimulationStep(true);

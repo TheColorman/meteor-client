@@ -13,7 +13,7 @@ import meteordevelopment.meteorclient.systems.modules.Categories;
 import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.orbit.EventHandler;
 import meteordevelopment.orbit.EventPriority;
-import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.packet.Packet;
 import net.minecraft.network.protocol.PacketType;
 import org.jetbrains.annotations.NotNull;
 

@@ -12,7 +12,7 @@ import meteordevelopment.meteorclient.systems.hud.screens.HudEditorScreen;
 import meteordevelopment.meteorclient.utils.Utils;
 import meteordevelopment.meteorclient.utils.misc.ISerializable;
 import meteordevelopment.meteorclient.utils.other.Snapper;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 
 public abstract class HudElement implements Snapper.Element, ISerializable<HudElement> {
     public final HudElementInfo<?> info;
@@ -48,7 +48,8 @@ public abstract class HudElement implements Snapper.Element, ISerializable<HudEl
             box.xAnchor = XAnchor.Left;
             box.yAnchor = YAnchor.Top;
             box.updateAnchors();
-        } else {
+        }
+        else {
             box.setPos(box.x + (x - this.x), box.y + (y - this.y));
         }
 
@@ -98,14 +99,11 @@ public abstract class HudElement implements Snapper.Element, ISerializable<HudEl
         Hud.get().remove(this);
     }
 
-    public void tick(HudRenderer renderer) {
-    }
+    public void tick(HudRenderer renderer) {}
 
-    public void render(HudRenderer renderer) {
-    }
+    public void render(HudRenderer renderer) {}
 
-    public void onFontChanged() {
-    }
+    public void onFontChanged() {}
 
     public WWidget getWidget(GuiTheme theme) {
         return null;
@@ -114,8 +112,8 @@ public abstract class HudElement implements Snapper.Element, ISerializable<HudEl
     // Serialization
 
     @Override
-    public CompoundTag toTag() {
-        CompoundTag tag = new CompoundTag();
+    public NbtCompound toTag() {
+        NbtCompound tag = new NbtCompound();
 
         tag.putString("name", info.name);
         tag.putBoolean("active", active);
@@ -129,7 +127,7 @@ public abstract class HudElement implements Snapper.Element, ISerializable<HudEl
     }
 
     @Override
-    public HudElement fromTag(CompoundTag tag) {
+    public HudElement fromTag(NbtCompound tag) {
         settings.reset();
 
         tag.getBoolean("active").ifPresent(active1 -> active = active1);

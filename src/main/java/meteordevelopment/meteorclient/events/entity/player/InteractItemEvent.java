@@ -5,16 +5,16 @@
 
 package meteordevelopment.meteorclient.events.entity.player;
 
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.InteractionHand;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
 
 public class InteractItemEvent {
     private static final InteractItemEvent INSTANCE = new InteractItemEvent();
 
-    public InteractionHand hand;
-    public InteractionResult toReturn;
+    public Hand hand;
+    public ActionResult toReturn;
 
-    public static InteractItemEvent get(InteractionHand hand) {
+    public static InteractItemEvent get(Hand hand) {
         INSTANCE.hand = hand;
         INSTANCE.toReturn = null;
 

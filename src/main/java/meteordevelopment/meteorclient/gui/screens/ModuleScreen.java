@@ -26,7 +26,7 @@ import meteordevelopment.meteorclient.systems.modules.Modules;
 import meteordevelopment.meteorclient.utils.misc.NbtUtils;
 import meteordevelopment.meteorclient.utils.render.prompts.OkPrompt;
 import meteordevelopment.orbit.EventHandler;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 
 import java.util.Optional;
 
@@ -157,11 +157,11 @@ public class ModuleScreen extends WindowScreen {
 
     @Override
     public boolean toClipboard() {
-        CompoundTag tag = new CompoundTag();
+        NbtCompound tag = new NbtCompound();
 
         tag.putString("name", module.name);
 
-        CompoundTag settingsTag = module.settings.toTag();
+        NbtCompound settingsTag = module.settings.toTag();
         if (!settingsTag.isEmpty()) tag.put("settings", settingsTag);
 
         return NbtUtils.toClipboard(tag);
@@ -169,11 +169,11 @@ public class ModuleScreen extends WindowScreen {
 
     @Override
     public boolean fromClipboard() {
-        CompoundTag tag = NbtUtils.fromClipboard();
+        NbtCompound tag = NbtUtils.fromClipboard();
         if (tag == null) return false;
-        if (!tag.getStringOr("name", "").equals(module.name)) return false;
+        if (!tag.getString("name", "").equals(module.name)) return false;
 
-        Optional<CompoundTag> settings = tag.getCompound("settings");
+        Optional<NbtCompound> settings = tag.getCompound("settings");
 
         if (settings.isPresent()) module.settings.fromTag(settings.get());
         else module.settings.reset();

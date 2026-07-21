@@ -6,16 +6,16 @@
 package meteordevelopment.meteorclient.events.entity.player;
 
 import meteordevelopment.meteorclient.events.Cancellable;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.InteractionHand;
+import net.minecraft.entity.Entity;
+import net.minecraft.util.Hand;
 
 public class InteractEntityEvent extends Cancellable {
     private static final InteractEntityEvent INSTANCE = new InteractEntityEvent();
 
     public Entity entity;
-    public InteractionHand hand;
+    public Hand hand;
 
-    public static InteractEntityEvent get(Entity entity, InteractionHand hand) {
+    public static InteractEntityEvent get(Entity entity, Hand hand) {
         INSTANCE.setCancelled(false);
         INSTANCE.entity = entity;
         INSTANCE.hand = hand;

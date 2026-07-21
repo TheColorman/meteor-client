@@ -5,10 +5,10 @@
 
 package meteordevelopment.meteorclient.commands.arguments;
 
-import net.minecraft.commands.arguments.StringRepresentableArgument;
-import net.minecraft.core.Direction;
+import net.minecraft.command.argument.EnumArgumentType;
+import net.minecraft.util.math.Direction;
 
-public class DirectionArgumentType extends StringRepresentableArgument<Direction> {
+public class DirectionArgumentType extends EnumArgumentType<Direction> {
     private static final DirectionArgumentType INSTANCE = new DirectionArgumentType();
 
     private DirectionArgumentType() {

@@ -12,7 +12,7 @@ import meteordevelopment.meteorclient.settings.SettingGroup;
 import meteordevelopment.meteorclient.systems.modules.Categories;
 import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.orbit.EventHandler;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.util.math.Vec3d;
 
 public class Spider extends Module {
     private final SettingGroup sgGeneral = settings.getDefaultGroup();
@@ -33,9 +33,9 @@ public class Spider extends Module {
     private void onTick(TickEvent.Post event) {
         if (!mc.player.horizontalCollision) return;
 
-        Vec3 velocity = mc.player.getDeltaMovement();
+        Vec3d velocity = mc.player.getVelocity();
         if (velocity.y >= 0.2) return;
 
-        mc.player.setDeltaMovement(velocity.x, speed.get(), velocity.z);
+        mc.player.setVelocity(velocity.x, speed.get(), velocity.z);
     }
 }

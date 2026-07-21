@@ -6,14 +6,14 @@
 package meteordevelopment.meteorclient.events.world;
 
 import meteordevelopment.meteorclient.events.Cancellable;
-import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.particle.ParticleEffect;
 
 public class ParticleEvent extends Cancellable {
     private static final ParticleEvent INSTANCE = new ParticleEvent();
 
-    public ParticleOptions particle;
+    public ParticleEffect particle;
 
-    public static ParticleEvent get(ParticleOptions particle) {
+    public static ParticleEvent get(ParticleEffect particle) {
         INSTANCE.setCancelled(false);
         INSTANCE.particle = particle;
         return INSTANCE;

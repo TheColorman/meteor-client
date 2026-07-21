@@ -8,17 +8,17 @@ package meteordevelopment.meteorclient.settings;
 import it.unimi.dsi.fastutil.objects.Reference2IntArrayMap;
 import it.unimi.dsi.fastutil.objects.Reference2IntMap;
 import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.Identifier;
-import net.minecraft.world.effect.MobEffect;
+import net.minecraft.entity.effect.StatusEffect;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.registry.Registries;
+import net.minecraft.util.Identifier;
 
 import java.util.function.Consumer;
 
-public class StatusEffectAmplifierMapSetting extends Setting<Reference2IntMap<MobEffect>> {
-    public static final Reference2IntMap<MobEffect> EMPTY_STATUS_EFFECT_MAP = createStatusEffectMap();
+public class StatusEffectAmplifierMapSetting extends Setting<Reference2IntMap<StatusEffect>> {
+    public static final Reference2IntMap<StatusEffect> EMPTY_STATUS_EFFECT_MAP = createStatusEffectMap();
 
-    public StatusEffectAmplifierMapSetting(String name, String description, Reference2IntMap<MobEffect> defaultValue, Consumer<Reference2IntMap<MobEffect>> onChanged, Consumer<Setting<Reference2IntMap<MobEffect>>> onModuleActivated, IVisible visible) {
+    public StatusEffectAmplifierMapSetting(String name, String description, Reference2IntMap<StatusEffect> defaultValue, Consumer<Reference2IntMap<StatusEffect>> onChanged, Consumer<Setting<Reference2IntMap<StatusEffect>>> onModuleActivated, IVisible visible) {
         super(name, description, defaultValue, onChanged, onModuleActivated, visible);
     }
 
@@ -28,35 +28,34 @@ public class StatusEffectAmplifierMapSetting extends Setting<Reference2IntMap<Mo
     }
 
     @Override
-    protected Reference2IntMap<MobEffect> parseImpl(String str) {
+    protected Reference2IntMap<StatusEffect> parseImpl(String str) {
         String[] values = str.split(",");
-        Reference2IntMap<MobEffect> effects = new Reference2IntOpenHashMap<>(EMPTY_STATUS_EFFECT_MAP);
+        Reference2IntMap<StatusEffect> effects = new Reference2IntOpenHashMap<>(EMPTY_STATUS_EFFECT_MAP);
 
         try {
             for (String value : values) {
                 String[] split = value.split(" ");
 
-                MobEffect effect = parseId(BuiltInRegistries.MOB_EFFECT, split[0]);
+                StatusEffect effect = parseId(Registries.STATUS_EFFECT, split[0]);
                 int level = Integer.parseInt(split[1]);
 
                 effects.put(effect, level);
             }
-        } catch (Exception _) {
-        }
+        } catch (Exception ignored) {}
 
         return effects;
     }
 
     @Override
-    protected boolean isValueValid(Reference2IntMap<MobEffect> value) {
+    protected boolean isValueValid(Reference2IntMap<StatusEffect> value) {
         return true;
     }
 
     @Override
-    public CompoundTag save(CompoundTag tag) {
-        CompoundTag valueTag = new CompoundTag();
-        for (MobEffect statusEffect : get().keySet()) {
-            Identifier id = BuiltInRegistries.MOB_EFFECT.getKey(statusEffect);
+    public NbtCompound save(NbtCompound tag) {
+        NbtCompound valueTag = new NbtCompound();
+        for (StatusEffect statusEffect : get().keySet()) {
+            Identifier id = Registries.STATUS_EFFECT.getId(statusEffect);
             if (id != null) valueTag.putInt(id.toString(), get().getInt(statusEffect));
         }
         tag.put("value", valueTag);
@@ -64,28 +63,28 @@ public class StatusEffectAmplifierMapSetting extends Setting<Reference2IntMap<Mo
         return tag;
     }
 
-    private static Reference2IntMap<MobEffect> createStatusEffectMap() {
-        Reference2IntMap<MobEffect> map = new Reference2IntArrayMap<>(BuiltInRegistries.MOB_EFFECT.keySet().size());
+    private static Reference2IntMap<StatusEffect> createStatusEffectMap() {
+        Reference2IntMap<StatusEffect> map = new Reference2IntArrayMap<>(Registries.STATUS_EFFECT.getIds().size());
 
-        BuiltInRegistries.MOB_EFFECT.forEach(potion -> map.put(potion, 0));
+        Registries.STATUS_EFFECT.forEach(potion -> map.put(potion, 0));
 
         return map;
     }
 
     @Override
-    public Reference2IntMap<MobEffect> load(CompoundTag tag) {
+    public Reference2IntMap<StatusEffect> load(NbtCompound tag) {
         get().clear();
 
-        CompoundTag valueTag = tag.getCompoundOrEmpty("value");
-        for (String key : valueTag.keySet()) {
-            MobEffect statusEffect = BuiltInRegistries.MOB_EFFECT.getValue(Identifier.parse(key));
-            if (statusEffect != null) get().put(statusEffect, valueTag.getIntOr(key, 0));
+        NbtCompound valueTag = tag.getCompoundOrEmpty("value");
+        for (String key : valueTag.getKeys()) {
+            StatusEffect statusEffect = Registries.STATUS_EFFECT.get(Identifier.of(key));
+            if (statusEffect != null) get().put(statusEffect, valueTag.getInt(key, 0));
         }
 
         return get();
     }
 
-    public static class Builder extends SettingBuilder<Builder, Reference2IntMap<MobEffect>, StatusEffectAmplifierMapSetting> {
+    public static class Builder extends SettingBuilder<Builder, Reference2IntMap<StatusEffect>, StatusEffectAmplifierMapSetting> {
         public Builder() {
             super(new Reference2IntOpenHashMap<>(0));
         }

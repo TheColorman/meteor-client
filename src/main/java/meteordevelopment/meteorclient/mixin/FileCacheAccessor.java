@@ -5,14 +5,14 @@
 
 package meteordevelopment.meteorclient.mixin;
 
-import net.minecraft.client.resources.SkinManager;
+import net.minecraft.client.texture.PlayerSkinProvider;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 import java.nio.file.Path;
 
-@Mixin(SkinManager.TextureCache.class)
+@Mixin(PlayerSkinProvider.FileCache.class)
 public interface FileCacheAccessor {
-    @Accessor("root")
-    Path meteor$getRoot();
+    @Accessor("directory")
+    Path meteor$getDirectory();
 }

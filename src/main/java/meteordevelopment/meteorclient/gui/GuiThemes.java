@@ -9,7 +9,7 @@ import meteordevelopment.meteorclient.MeteorClient;
 import meteordevelopment.meteorclient.gui.themes.meteor.MeteorGuiTheme;
 import meteordevelopment.meteorclient.utils.PostInit;
 import meteordevelopment.meteorclient.utils.PreInit;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtIo;
 
 import java.io.File;
@@ -38,9 +38,9 @@ public class GuiThemes {
     public static void postInit() {
         if (FILE.exists()) {
             try {
-                CompoundTag tag = NbtIo.read(FILE.toPath());
+                NbtCompound tag = NbtIo.read(FILE.toPath());
 
-                if (tag != null) select(tag.getStringOr("currentTheme", ""));
+                if (tag != null) select(tag.getString("currentTheme", ""));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -50,7 +50,7 @@ public class GuiThemes {
     }
 
     public static void add(GuiTheme theme) {
-        for (ListIterator<GuiTheme> it = themes.listIterator(); it.hasNext(); ) {
+        for (ListIterator<GuiTheme> it = themes.listIterator(); it.hasNext();) {
             if (it.next().name.equals(theme.name)) {
                 // Replace the old one with same name
                 it.set(theme);
@@ -86,7 +86,7 @@ public class GuiThemes {
                 File file = new File(THEMES_FOLDER, get().name + ".nbt");
 
                 if (file.exists()) {
-                    CompoundTag tag = NbtIo.read(file.toPath());
+                    NbtCompound tag = NbtIo.read(file.toPath());
                     if (tag != null) get().fromTag(tag);
                 }
             } catch (IOException e) {
@@ -117,7 +117,7 @@ public class GuiThemes {
     private static void saveTheme() {
         if (get() != null) {
             try {
-                CompoundTag tag = get().toTag();
+                NbtCompound tag = get().toTag();
 
                 THEMES_FOLDER.mkdirs();
                 NbtIo.write(tag, new File(THEMES_FOLDER, get().name + ".nbt").toPath());
@@ -129,7 +129,7 @@ public class GuiThemes {
 
     private static void saveGlobal() {
         try {
-            CompoundTag tag = new CompoundTag();
+            NbtCompound tag = new NbtCompound();
             tag.putString("currentTheme", get().name);
 
             FOLDER.mkdirs();

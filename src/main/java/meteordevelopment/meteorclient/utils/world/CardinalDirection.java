@@ -5,7 +5,7 @@
 
 package meteordevelopment.meteorclient.utils.world;
 
-import net.minecraft.core.Direction;
+import net.minecraft.util.math.Direction;
 
 public enum CardinalDirection {
     North,

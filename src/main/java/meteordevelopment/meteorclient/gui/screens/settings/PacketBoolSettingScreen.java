@@ -11,7 +11,7 @@ import meteordevelopment.meteorclient.gui.widgets.WWidget;
 import meteordevelopment.meteorclient.settings.PacketListSetting;
 import meteordevelopment.meteorclient.settings.Setting;
 import meteordevelopment.meteorclient.utils.network.PacketUtils;
-import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.packet.Packet;
 import net.minecraft.network.protocol.PacketType;
 import org.jetbrains.annotations.NotNull;
 

@@ -14,7 +14,7 @@ import meteordevelopment.meteorclient.systems.modules.player.FakePlayer;
 import meteordevelopment.meteorclient.utils.entity.fakeplayer.FakePlayerEntity;
 import meteordevelopment.meteorclient.utils.entity.fakeplayer.FakePlayerManager;
 import meteordevelopment.meteorclient.utils.player.ChatUtils;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.minecraft.command.CommandSource;
 
 public class FakePlayerCommand extends Command {
     public FakePlayerCommand() {
@@ -22,9 +22,9 @@ public class FakePlayerCommand extends Command {
     }
 
     @Override
-    public void build(LiteralArgumentBuilder<ClientSuggestionProvider> builder) {
+    public void build(LiteralArgumentBuilder<CommandSource> builder) {
         builder.then(literal("add")
-            .executes(_ -> {
+            .executes(context -> {
                 FakePlayer fakePlayer = Modules.get().get(FakePlayer.class);
                 FakePlayerManager.add(fakePlayer.name.get(), fakePlayer.health.get(), fakePlayer.copyInv.get());
                 return SINGLE_SUCCESS;
@@ -56,14 +56,14 @@ public class FakePlayerCommand extends Command {
         );
 
         builder.then(literal("clear")
-            .executes(_ -> {
+            .executes(context -> {
                 FakePlayerManager.clear();
                 return SINGLE_SUCCESS;
             })
         );
 
         builder.then(literal("list")
-            .executes(_ -> {
+            .executes(context -> {
                 info("--- Fake Players ((highlight)%s(default)) ---", FakePlayerManager.count());
                 FakePlayerManager.forEach(fp -> ChatUtils.info("(highlight)%s".formatted(fp.getName().getString())));
                 return SINGLE_SUCCESS;

@@ -5,13 +5,13 @@
 
 package meteordevelopment.meteorclient.settings;
 
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
-import net.minecraft.resources.Identifier;
-import net.minecraft.world.level.block.Block;
+import net.minecraft.block.Block;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtList;
+import net.minecraft.nbt.NbtString;
+import net.minecraft.registry.Registries;
+import net.minecraft.util.Identifier;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,11 +40,10 @@ public class BlockListSetting extends Setting<List<Block>> {
 
         try {
             for (String value : values) {
-                Block block = parseId(BuiltInRegistries.BLOCK, value);
+                Block block = parseId(Registries.BLOCK, value);
                 if (block != null && (filter == null || filter.test(block))) blocks.add(block);
             }
-        } catch (Exception _) {
-        }
+        } catch (Exception ignored) {}
 
         return blocks;
     }
@@ -56,14 +55,14 @@ public class BlockListSetting extends Setting<List<Block>> {
 
     @Override
     public Iterable<Identifier> getIdentifierSuggestions() {
-        return BuiltInRegistries.BLOCK.keySet();
+        return Registries.BLOCK.getIds();
     }
 
     @Override
-    protected CompoundTag save(CompoundTag tag) {
-        ListTag valueTag = new ListTag();
+    protected NbtCompound save(NbtCompound tag) {
+        NbtList valueTag = new NbtList();
         for (Block block : get()) {
-            valueTag.add(StringTag.valueOf(BuiltInRegistries.BLOCK.getKey(block).toString()));
+            valueTag.add(NbtString.of(Registries.BLOCK.getId(block).toString()));
         }
         tag.put("value", valueTag);
 
@@ -71,12 +70,12 @@ public class BlockListSetting extends Setting<List<Block>> {
     }
 
     @Override
-    protected List<Block> load(CompoundTag tag) {
+    protected List<Block> load(NbtCompound tag) {
         get().clear();
 
-        ListTag valueTag = tag.getListOrEmpty("value");
-        for (Tag tagI : valueTag) {
-            Block block = BuiltInRegistries.BLOCK.getValue(Identifier.parse(tagI.asString().orElse("")));
+        NbtList valueTag = tag.getListOrEmpty("value");
+        for (NbtElement tagI : valueTag) {
+            Block block = Registries.BLOCK.get(Identifier.of(tagI.asString().orElse("")));
 
             if (filter == null || filter.test(block)) get().add(block);
         }

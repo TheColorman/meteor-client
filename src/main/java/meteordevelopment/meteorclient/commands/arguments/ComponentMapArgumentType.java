@@ -12,32 +12,32 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import meteordevelopment.meteorclient.utils.misc.ComponentMapReader;
-import net.minecraft.commands.CommandBuildContext;
-import net.minecraft.commands.SharedSuggestionProvider;
-import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.command.CommandRegistryAccess;
+import net.minecraft.command.CommandSource;
+import net.minecraft.component.ComponentMap;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public class ComponentMapArgumentType implements ArgumentType<DataComponentMap> {
+public class ComponentMapArgumentType implements ArgumentType<ComponentMap> {
     private static final Collection<String> EXAMPLES = List.of("{foo=bar}");
     private final ComponentMapReader reader;
 
-    public ComponentMapArgumentType(CommandBuildContext commandRegistryAccess) {
+    public ComponentMapArgumentType(CommandRegistryAccess commandRegistryAccess) {
         this.reader = new ComponentMapReader(commandRegistryAccess);
     }
 
-    public static ComponentMapArgumentType componentMap(CommandBuildContext commandRegistryAccess) {
+    public static ComponentMapArgumentType componentMap(CommandRegistryAccess commandRegistryAccess) {
         return new ComponentMapArgumentType(commandRegistryAccess);
     }
 
-    public static <S extends SharedSuggestionProvider> DataComponentMap getComponentMap(CommandContext<S> context, String name) {
-        return context.getArgument(name, DataComponentMap.class);
+    public static <S extends CommandSource> ComponentMap getComponentMap(CommandContext<S> context, String name) {
+        return context.getArgument(name, ComponentMap.class);
     }
 
     @Override
-    public DataComponentMap parse(StringReader reader) throws CommandSyntaxException {
+    public ComponentMap parse(StringReader reader) throws CommandSyntaxException {
         return this.reader.consume(reader);
     }
 

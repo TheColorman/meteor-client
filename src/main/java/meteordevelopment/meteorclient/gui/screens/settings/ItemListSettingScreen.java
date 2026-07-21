@@ -11,15 +11,15 @@ import meteordevelopment.meteorclient.gui.widgets.WWidget;
 import meteordevelopment.meteorclient.settings.ItemListSetting;
 import meteordevelopment.meteorclient.utils.misc.Names;
 import meteordevelopment.meteorclient.utils.render.DisplayItemUtils;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.Items;
+import net.minecraft.item.Item;
+import net.minecraft.item.Items;
+import net.minecraft.registry.Registries;
 
 import java.util.function.Predicate;
 
 public class ItemListSettingScreen extends CollectionListSettingScreen<Item> {
     public ItemListSettingScreen(GuiTheme theme, ItemListSetting setting) {
-        super(theme, "Select Items", setting, setting.get(), BuiltInRegistries.ITEM);
+        super(theme, "Select Items", setting, setting.get(), Registries.ITEM);
     }
 
     @Override
@@ -39,7 +39,7 @@ public class ItemListSettingScreen extends CollectionListSettingScreen<Item> {
     protected String[] getValueNames(Item value) {
         return new String[]{
             Names.get(value),
-            BuiltInRegistries.ITEM.getKey(value).toString()
+            Registries.ITEM.getId(value).toString()
         };
     }
 }

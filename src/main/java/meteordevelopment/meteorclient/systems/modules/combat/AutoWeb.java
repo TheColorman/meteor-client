@@ -19,12 +19,12 @@ import meteordevelopment.meteorclient.utils.player.PlayerUtils;
 import meteordevelopment.meteorclient.utils.render.color.SettingColor;
 import meteordevelopment.meteorclient.utils.world.BlockUtils;
 import meteordevelopment.orbit.EventHandler;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Items;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.RaycastContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -132,7 +132,7 @@ public class AutoWeb extends Module {
     );
 
     private final List<BlockPos> placePositions = new ArrayList<>();
-    private Player target = null;
+    private PlayerEntity target = null;
 
     public AutoWeb() {
         super(Categories.Combat, "auto-web", "Automatically places webs on other players.");
@@ -161,42 +161,42 @@ public class AutoWeb extends Module {
         FindItemResult webs = InvUtils.findInHotbar(Items.COBWEB);
         if (!webs.found()) return;
 
-        Vec3 pos = target.position();
+        Vec3d pos = target.getEntityPos();
 
         // Prediction mode via target's movement delta
         if (predictMovement.get()) {
-            double dx = target.getX() - target.xo;
-            double dy = target.getY() - target.yo;
-            double dz = target.getZ() - target.zo;
+            double dx = target.getX() - target.lastX;
+            double dy = target.getY() - target.lastY;
+            double dz = target.getZ() - target.lastZ;
             pos = pos.add(dx * ticksToPredict.get(), dy * ticksToPredict.get(), dz * ticksToPredict.get());
         }
 
-        BlockPos blockPos = BlockPos.containing(pos);
+        BlockPos blockPos = BlockPos.ofFloored(pos);
 
         if (canPlaceWebAt(blockPos)) {
             BlockUtils.place(blockPos, webs, rotate.get(), 0, false);
             placePositions.add(blockPos);
         }
 
-        if (doubles.get() && canPlaceWebAt(blockPos.above())) {
-            BlockUtils.place(blockPos.above(), webs, rotate.get(), 0, false);
-            placePositions.add(blockPos.above());
+        if (doubles.get() && canPlaceWebAt(blockPos.up())) {
+            BlockUtils.place(blockPos.up(), webs, rotate.get(), 0, false);
+            placePositions.add(blockPos.up());
         }
     }
 
     private boolean canPlaceWebAt(BlockPos blockPos) {
-        if (!mc.level.getBlockState(blockPos).canBeReplaced()) return false;
+        if (!mc.world.getBlockState(blockPos).isReplaceable()) return false;
 
         // Check raycast and range
         return !isOutOfRange(blockPos);
     }
 
     private boolean isOutOfRange(BlockPos blockPos) {
-        Vec3 pos = blockPos.getCenter();
+        Vec3d pos = blockPos.toCenterPos();
         if (!PlayerUtils.isWithin(pos, placeRange.get())) return true;
 
-        ClipContext clipContext = new ClipContext(mc.player.getEyePosition(), pos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, mc.player);
-        BlockHitResult result = mc.level.clip(clipContext);
+        RaycastContext raycastContext = new RaycastContext(mc.player.getEyePos(), pos, RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.NONE, mc.player);
+        BlockHitResult result = mc.world.raycast(raycastContext);
         if (result == null || !result.getBlockPos().equals(blockPos))
             return !PlayerUtils.isWithin(pos, placeWallsRange.get());
 

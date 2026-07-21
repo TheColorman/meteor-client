@@ -6,7 +6,7 @@
 package meteordevelopment.meteorclient.events.entity.player;
 
 import meteordevelopment.meteorclient.events.Cancellable;
-import net.minecraft.core.BlockPos;
+import net.minecraft.util.math.BlockPos;
 
 public class BreakBlockEvent extends Cancellable {
     private static final BreakBlockEvent INSTANCE = new BreakBlockEvent();

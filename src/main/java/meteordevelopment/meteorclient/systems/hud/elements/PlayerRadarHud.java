@@ -11,7 +11,8 @@ import meteordevelopment.meteorclient.systems.hud.*;
 import meteordevelopment.meteorclient.utils.player.PlayerUtils;
 import meteordevelopment.meteorclient.utils.render.color.Color;
 import meteordevelopment.meteorclient.utils.render.color.SettingColor;
-import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.network.AbstractClientPlayerEntity;
+import net.minecraft.entity.player.PlayerEntity;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -123,7 +124,7 @@ public class PlayerRadarHud extends HudElement {
         .build()
     );
 
-    private final List<AbstractClientPlayer> players = new ArrayList<>();
+    private final List<AbstractClientPlayerEntity> players = new ArrayList<>();
 
     public PlayerRadarHud() {
         super(INFO);
@@ -144,12 +145,12 @@ public class PlayerRadarHud extends HudElement {
         double width = renderer.textWidth("Players:", shadow.get(), getScale());
         double height = renderer.textHeight(shadow.get(), getScale());
 
-        if (mc.level == null || mc.getCameraEntity() == null) {
+        if (mc.world == null || mc.getCameraEntity() == null) {
             setSize(width, height);
             return;
         }
 
-        for (AbstractClientPlayer entity : getPlayers()) {
+        for (PlayerEntity entity : getPlayers()) {
             if (entity.equals(mc.player)) continue;
             if (!friends.get() && Friends.get().isFriend(entity)) continue;
 
@@ -173,10 +174,10 @@ public class PlayerRadarHud extends HudElement {
 
         renderer.text("Players:", x + border.get() + alignX(renderer.textWidth("Players:", shadow.get(), getScale()), alignment.get()), y, secondaryColor.get(), shadow.get(), getScale());
 
-        if (mc.level == null || mc.getCameraEntity() == null) return;
+        if (mc.world == null || mc.getCameraEntity() == null) return;
         double spaceWidth = renderer.textWidth(" ", shadow.get(), getScale());
 
-        for (AbstractClientPlayer entity : getPlayers()) {
+        for (PlayerEntity entity : getPlayers()) {
             if (entity.equals(mc.player)) continue;
             if (!friends.get() && Friends.get().isFriend(entity)) continue;
 
@@ -196,17 +197,15 @@ public class PlayerRadarHud extends HudElement {
             y += renderer.textHeight(shadow.get(), getScale()) + 2;
 
             x = renderer.text(text, x, y, color, shadow.get());
-            if (distance.get())
-                renderer.text(distanceText, x + spaceWidth, y, secondaryColor.get(), shadow.get(), getScale());
+            if (distance.get()) renderer.text(distanceText, x + spaceWidth, y, secondaryColor.get(), shadow.get(), getScale());
         }
     }
 
-    private List<AbstractClientPlayer> getPlayers() {
+    private List<AbstractClientPlayerEntity> getPlayers() {
         players.clear();
-        players.addAll(mc.level.players());
         players.removeIf(Objects::isNull);
         if (players.size() > limit.get()) players.subList(limit.get() - 1, players.size() - 1).clear();
-        players.sort(Comparator.comparingDouble(e -> e.distanceToSqr(mc.getCameraEntity())));
+        players.sort(Comparator.comparingDouble(e -> e.squaredDistanceTo(mc.getCameraEntity())));
 
         return players;
     }

@@ -11,40 +11,40 @@ import meteordevelopment.meteorclient.gui.widgets.WWidget;
 import meteordevelopment.meteorclient.settings.Setting;
 import meteordevelopment.meteorclient.utils.misc.Names;
 import meteordevelopment.meteorclient.utils.render.DisplayItemUtils;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.world.effect.MobEffect;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.alchemy.PotionContents;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.PotionContentsComponent;
+import net.minecraft.entity.effect.StatusEffect;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.registry.Registries;
 
 import java.util.List;
 import java.util.Optional;
 
-public class StatusEffectListSettingScreen extends CollectionListSettingScreen<MobEffect> {
-    public StatusEffectListSettingScreen(GuiTheme theme, Setting<List<MobEffect>> setting) {
-        super(theme, "Select Effects", setting, setting.get(), BuiltInRegistries.MOB_EFFECT);
+public class StatusEffectListSettingScreen extends CollectionListSettingScreen<StatusEffect> {
+    public StatusEffectListSettingScreen(GuiTheme theme, Setting<List<StatusEffect>> setting) {
+        super(theme, "Select Effects", setting, setting.get(), Registries.STATUS_EFFECT);
     }
 
     @Override
-    protected WWidget getValueWidget(MobEffect value) {
+    protected WWidget getValueWidget(StatusEffect value) {
         return theme.itemWithLabel(getPotionStack(value), Names.get(value));
     }
 
     @Override
-    protected String[] getValueNames(MobEffect value) {
+    protected String[] getValueNames(StatusEffect value) {
         return new String[]{
             Names.get(value),
-            BuiltInRegistries.MOB_EFFECT.getKey(value).toString()
+            Registries.STATUS_EFFECT.getId(value).toString()
         };
     }
 
-    private ItemStack getPotionStack(MobEffect effect) {
+    private ItemStack getPotionStack(StatusEffect effect) {
         ItemStack potion = DisplayItemUtils.toStack(Items.POTION);
 
         potion.set(
-            DataComponents.POTION_CONTENTS,
-            new PotionContents(
+            DataComponentTypes.POTION_CONTENTS,
+            new PotionContentsComponent(
                 Optional.empty(),
                 Optional.of(effect.getColor()),
                 List.of(),

@@ -13,42 +13,41 @@ import com.mojang.serialization.DataResult;
 import meteordevelopment.meteorclient.commands.Command;
 import meteordevelopment.meteorclient.commands.arguments.ComponentMapArgumentType;
 import meteordevelopment.meteorclient.utils.misc.text.MeteorClickEvent;
-import net.minecraft.ChatFormatting;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
-import net.minecraft.commands.SharedSuggestionProvider;
-import net.minecraft.commands.arguments.NbtPathArgument;
-import net.minecraft.commands.arguments.ResourceKeyArgument;
-import net.minecraft.core.component.*;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.NbtUtils;
-import net.minecraft.nbt.Tag;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.HoverEvent;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.Style;
-import net.minecraft.network.protocol.game.ServerboundSetCreativeModeSlotPacket;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.server.commands.data.DataAccessor;
-import net.minecraft.server.commands.data.EntityDataAccessor;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.command.CommandSource;
+import net.minecraft.command.DataCommandObject;
+import net.minecraft.command.EntityDataObject;
+import net.minecraft.command.argument.NbtPathArgumentType;
+import net.minecraft.command.argument.RegistryKeyArgumentType;
+import net.minecraft.component.*;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtHelper;
+import net.minecraft.network.packet.c2s.play.CreativeInventoryActionC2SPacket;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.text.HoverEvent;
+import net.minecraft.text.MutableText;
+import net.minecraft.text.Style;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
+import net.minecraft.util.Unit;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
 public class NbtCommand extends Command {
     private static final DynamicCommandExceptionType MALFORMED_ITEM_EXCEPTION = new DynamicCommandExceptionType(
-        error -> Component.translatableEscape("arguments.item.malformed", error)
+        error -> Text.stringifiedTranslatable("arguments.item.malformed", error)
     );
-    private final MutableComponent copyButton = Component.literal("NBT").setStyle(Style.EMPTY
-        .applyFormat(ChatFormatting.UNDERLINE)
+    private final Text copyButton = Text.literal("NBT").setStyle(Style.EMPTY
+        .withFormatting(Formatting.UNDERLINE)
         .withClickEvent(new MeteorClickEvent(
             this.toString("copy")
         ))
         .withHoverEvent(new HoverEvent.ShowText(
-            Component.literal("Copy the NBT data to your clipboard.")
+            Text.literal("Copy the NBT data to your clipboard.")
         )));
 
     public NbtCommand() {
@@ -56,21 +55,19 @@ public class NbtCommand extends Command {
     }
 
     @Override
-    public void build(LiteralArgumentBuilder<ClientSuggestionProvider> builder) {
+    public void build(LiteralArgumentBuilder<CommandSource> builder) {
         builder.then(literal("add").then(argument("component", ComponentMapArgumentType.componentMap(REGISTRY_ACCESS)).executes(ctx -> {
-            ItemStack stack = mc.player.getInventory().getSelectedItem();
+            ItemStack stack = mc.player.getInventory().getSelectedStack();
 
             if (validBasic(stack)) {
-                DataComponentMap itemComponents = stack.getComponents();
-                DataComponentMap newComponents = ComponentMapArgumentType.getComponentMap(ctx, "component");
+                ComponentMap itemComponents = stack.getComponents();
+                ComponentMap newComponents = ComponentMapArgumentType.getComponentMap(ctx, "component");
 
-                DataComponentMap testComponents = DataComponentMap.composite(itemComponents, newComponents);
-                ItemStack testStack = stack.copy();
-                testStack.applyComponents(testComponents);
-                DataResult<ItemStack> dataResult = ItemStack.validateStrict(testStack);
+                ComponentMap testComponents = ComponentMap.of(itemComponents, newComponents);
+                DataResult<Unit> dataResult = ItemStack.validateComponents(testComponents);
                 dataResult.getOrThrow(MALFORMED_ITEM_EXCEPTION::create);
 
-                stack.applyComponents(testComponents);
+                stack.applyComponentsFrom(testComponents);
 
                 setStack(stack);
             }
@@ -79,32 +76,30 @@ public class NbtCommand extends Command {
         })));
 
         builder.then(literal("set").then(argument("component", ComponentMapArgumentType.componentMap(REGISTRY_ACCESS)).executes(ctx -> {
-            ItemStack stack = mc.player.getInventory().getSelectedItem();
+            ItemStack stack = mc.player.getInventory().getSelectedStack();
 
             if (validBasic(stack)) {
-                DataComponentMap components = ComponentMapArgumentType.getComponentMap(ctx, "component");
-                PatchedDataComponentMap stackComponents = (PatchedDataComponentMap) stack.getComponents();
+                ComponentMap components = ComponentMapArgumentType.getComponentMap(ctx, "component");
+                MergedComponentMap stackComponents = (MergedComponentMap) stack.getComponents();
 
-                ItemStack testStack = stack.copy();
-                testStack.applyComponents(components);
-                DataResult<ItemStack> dataResult = ItemStack.validateStrict(testStack);
+                DataResult<Unit> dataResult = ItemStack.validateComponents(components);
                 dataResult.getOrThrow(MALFORMED_ITEM_EXCEPTION::create);
 
-                DataComponentPatch.Builder changesBuilder = DataComponentPatch.builder();
-                Set<DataComponentType<?>> types = new HashSet<>(stackComponents.keySet());
+                ComponentChanges.Builder changesBuilder = ComponentChanges.builder();
+                Set<ComponentType<?>> types = stackComponents.getTypes();
 
                 //set changes
-                for (TypedDataComponent<?> entry : components) {
-                    changesBuilder.set(entry);
+                for (Component<?> entry : components) {
+                    changesBuilder.add(entry);
                     types.remove(entry.type());
                 }
 
                 //remove the rest
-                for (DataComponentType<?> type : types) {
+                for (ComponentType<?> type : types) {
                     changesBuilder.remove(type);
                 }
 
-                stackComponents.applyPatch(changesBuilder.build());
+                stackComponents.applyChanges(changesBuilder.build());
 
                 setStack(stack);
             }
@@ -112,36 +107,36 @@ public class NbtCommand extends Command {
             return SINGLE_SUCCESS;
         })));
 
-        builder.then(literal("remove").then(argument("component", ResourceKeyArgument.key(Registries.DATA_COMPONENT_TYPE)).executes(ctx -> {
-            ItemStack stack = mc.player.getInventory().getSelectedItem();
+        builder.then(literal("remove").then(argument("component", RegistryKeyArgumentType.registryKey(RegistryKeys.DATA_COMPONENT_TYPE)).executes(ctx -> {
+            ItemStack stack = mc.player.getInventory().getSelectedStack();
 
             if (validBasic(stack)) {
                 @SuppressWarnings("unchecked")
-                ResourceKey<DataComponentType<?>> componentTypeKey = (ResourceKey<DataComponentType<?>>) ctx.getArgument("component", ResourceKey.class);
+                RegistryKey<ComponentType<?>> componentTypeKey = (RegistryKey<ComponentType<?>>) ctx.getArgument("component", RegistryKey.class);
 
-                DataComponentType<?> componentType = BuiltInRegistries.DATA_COMPONENT_TYPE.getValue(componentTypeKey);
+                ComponentType<?> componentType = Registries.DATA_COMPONENT_TYPE.get(componentTypeKey);
 
-                PatchedDataComponentMap components = (PatchedDataComponentMap) stack.getComponents();
-                components.applyPatch(DataComponentPatch.builder().remove(componentType).build());
+                MergedComponentMap components = (MergedComponentMap) stack.getComponents();
+                components.applyChanges(ComponentChanges.builder().remove(componentType).build());
 
                 setStack(stack);
             }
 
             return SINGLE_SUCCESS;
-        }).suggests((_, suggestionsBuilder) -> {
-            ItemStack stack = mc.player.getInventory().getSelectedItem();
+        }).suggests((ctx, suggestionsBuilder) -> {
+            ItemStack stack = mc.player.getInventory().getSelectedStack();
             if (stack != ItemStack.EMPTY) {
-                DataComponentMap components = stack.getComponents();
+                ComponentMap components = stack.getComponents();
                 String remaining = suggestionsBuilder.getRemaining().toLowerCase(Locale.ROOT);
 
-                SharedSuggestionProvider.filterResources(components.keySet().stream().map(BuiltInRegistries.DATA_COMPONENT_TYPE::wrapAsHolder).toList(), remaining, entry -> {
-                    if (entry.unwrapKey().isPresent()) return entry.unwrapKey().get().identifier();
+                CommandSource.forEachMatching(components.getTypes().stream().map(Registries.DATA_COMPONENT_TYPE::getEntry).toList(), remaining, entry -> {
+                    if (entry.getKey().isPresent()) return entry.getKey().get().getValue();
                     return null;
                 }, entry -> {
-                    DataComponentType<?> dataComponentType = entry.value();
-                    if (dataComponentType.codec() != null) {
-                        if (entry.unwrapKey().isPresent()) {
-                            suggestionsBuilder.suggest(entry.unwrapKey().get().identifier().toString());
+                    ComponentType<?> dataComponentType = entry.value();
+                    if (dataComponentType.getCodec() != null) {
+                        if (entry.getKey().isPresent()) {
+                            suggestionsBuilder.suggest(entry.getKey().get().getValue().toString());
                         }
                     }
                 });
@@ -150,18 +145,18 @@ public class NbtCommand extends Command {
             return suggestionsBuilder.buildFuture();
         })));
 
-        builder.then(literal("get").executes(_ -> {
-            DataAccessor dataCommandObject = new EntityDataAccessor(mc.player);
-            NbtPathArgument.NbtPath handPath = NbtPathArgument.NbtPath.of("SelectedItem");
+        builder.then(literal("get").executes(context -> {
+            DataCommandObject dataCommandObject = new EntityDataObject(mc.player);
+            NbtPathArgumentType.NbtPath handPath = NbtPathArgumentType.NbtPath.parse("SelectedItem");
 
-            MutableComponent text = Component.empty().append(copyButton);
+            MutableText text = Text.empty().append(copyButton);
 
             try {
-                List<Tag> nbtElement = handPath.get(dataCommandObject.getData());
+                List<NbtElement> nbtElement = handPath.get(dataCommandObject.getNbt());
                 if (!nbtElement.isEmpty()) {
-                    text.append(" ").append(NbtUtils.toPrettyComponent(nbtElement.getFirst()));
+                    text.append(" ").append(NbtHelper.toPrettyPrintedText(nbtElement.getFirst()));
                 }
-            } catch (CommandSyntaxException _) {
+            } catch (CommandSyntaxException e) {
                 text.append("{}");
             }
 
@@ -170,24 +165,24 @@ public class NbtCommand extends Command {
             return SINGLE_SUCCESS;
         }));
 
-        builder.then(literal("copy").executes(_ -> {
-            DataAccessor dataCommandObject = new EntityDataAccessor(mc.player);
-            NbtPathArgument.NbtPath handPath = NbtPathArgument.NbtPath.of("SelectedItem");
+        builder.then(literal("copy").executes(context -> {
+            DataCommandObject dataCommandObject = new EntityDataObject(mc.player);
+            NbtPathArgumentType.NbtPath handPath = NbtPathArgumentType.NbtPath.parse("SelectedItem");
 
-            MutableComponent text = Component.empty().append(copyButton);
+            MutableText text = Text.empty().append(copyButton);
             String nbt = "{}";
 
             try {
-                List<Tag> nbtElement = handPath.get(dataCommandObject.getData());
+                List<NbtElement> nbtElement = handPath.get(dataCommandObject.getNbt());
                 if (!nbtElement.isEmpty()) {
-                    text.append(" ").append(NbtUtils.toPrettyComponent(nbtElement.getFirst()));
+                    text.append(" ").append(NbtHelper.toPrettyPrintedText(nbtElement.getFirst()));
                     nbt = nbtElement.getFirst().toString();
                 }
-            } catch (CommandSyntaxException _) {
+            } catch (CommandSyntaxException e) {
                 text.append("{}");
             }
 
-            mc.keyboardHandler.setClipboard(nbt);
+            mc.keyboard.setClipboard(nbt);
 
             text.append(" data copied!");
             info(text);
@@ -196,7 +191,7 @@ public class NbtCommand extends Command {
         }));
 
         builder.then(literal("count").then(argument("count", IntegerArgumentType.integer(-127, 127)).executes(context -> {
-            ItemStack stack = mc.player.getInventory().getSelectedItem();
+            ItemStack stack = mc.player.getInventory().getSelectedStack();
 
             if (validBasic(stack)) {
                 int count = IntegerArgumentType.getInteger(context, "count");
@@ -210,11 +205,11 @@ public class NbtCommand extends Command {
     }
 
     private void setStack(ItemStack stack) {
-        mc.player.connection.send(new ServerboundSetCreativeModeSlotPacket(36 + mc.player.getInventory().getSelectedSlot(), stack));
+        mc.player.networkHandler.sendPacket(new CreativeInventoryActionC2SPacket(36 + mc.player.getInventory().getSelectedSlot(), stack));
     }
 
     private boolean validBasic(ItemStack stack) {
-        if (!mc.player.getAbilities().instabuild) {
+        if (!mc.player.getAbilities().creativeMode) {
             error("Creative mode only.");
             return false;
         }

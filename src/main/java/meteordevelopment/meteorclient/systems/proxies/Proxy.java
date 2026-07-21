@@ -10,8 +10,8 @@ import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.utils.Utils;
 import meteordevelopment.meteorclient.utils.misc.ISerializable;
 import meteordevelopment.meteorclient.utils.render.color.Color;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -90,11 +90,9 @@ public class Proxy implements ISerializable<Proxy> {
     //  - the isSocks methods could be used to try and detect the version of added proxies when it's unclear -
     //     the only complication would be that some ips seem to be valid for both 4 and 5
 
-    private Proxy() {
-    }
-
-    public Proxy(Tag tag) {
-        fromTag((CompoundTag) tag);
+    private Proxy() {}
+    public Proxy(NbtElement tag) {
+        fromTag((NbtCompound) tag);
     }
 
     public boolean resolveAddress() {
@@ -102,11 +100,11 @@ public class Proxy implements ISerializable<Proxy> {
     }
 
     /**
-     * Return codes: <br>
-     * 0: In the process of checking <br>
-     * 1: The proxy is alive <br>
-     * 2: The proxy is dead <br>
-     * 3: The check timed out
+     *  Return codes: <br>
+     *  0: In the process of checking <br>
+     *  1: The proxy is alive <br>
+     *  2: The proxy is dead <br>
+     *  3: The check timed out
      */
     public int checkStatus() {
         if (status == Status.CHECKING) return 0;
@@ -121,10 +119,11 @@ public class Proxy implements ISerializable<Proxy> {
                 latency = Duration.between(before, Instant.now()).toMillis();
                 return 1;
             }
-        } catch (SocketTimeoutException _) {
-            timeout = true;
-        } catch (IOException _) {
         }
+        catch (SocketTimeoutException e) {
+            timeout = true;
+        }
+        catch (IOException ignored) {}
 
         try {
             Instant before = Instant.now();
@@ -133,10 +132,11 @@ public class Proxy implements ISerializable<Proxy> {
                 latency = Duration.between(before, Instant.now()).toMillis();
                 return 1;
             }
-        } catch (SocketTimeoutException _) {
-            timeout = true;
-        } catch (IOException _) {
         }
+        catch (SocketTimeoutException e) {
+            timeout = true;
+        }
+        catch (IOException ignored) {}
 
         status = Status.DEAD;
         return timeout ? 3 : 2;
@@ -262,8 +262,8 @@ public class Proxy implements ISerializable<Proxy> {
     }
 
     @Override
-    public CompoundTag toTag() {
-        CompoundTag tag = new CompoundTag();
+    public NbtCompound toTag() {
+        NbtCompound tag = new NbtCompound();
 
         tag.put("settings", settings.toTag());
 
@@ -271,7 +271,7 @@ public class Proxy implements ISerializable<Proxy> {
     }
 
     @Override
-    public Proxy fromTag(CompoundTag tag) {
+    public Proxy fromTag(NbtCompound tag) {
         tag.getCompound("settings").ifPresent(settings::fromTag);
 
         return this;

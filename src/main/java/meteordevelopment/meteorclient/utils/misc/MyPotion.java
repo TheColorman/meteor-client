@@ -6,16 +6,14 @@
 package meteordevelopment.meteorclient.utils.misc;
 
 import meteordevelopment.meteorclient.utils.render.DisplayItemUtils;
-import net.minecraft.core.Holder;
+import net.minecraft.component.type.PotionContentsComponent;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.alchemy.Potion;
-import net.minecraft.world.item.alchemy.PotionContents;
-import net.minecraft.world.item.alchemy.Potions;
-
-import java.util.function.Supplier;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.potion.Potion;
+import net.minecraft.potion.Potions;
+import net.minecraft.registry.entry.RegistryEntry;
 
 public enum MyPotion {
     Swiftness(Potions.SWIFTNESS, Items.NETHER_WART, Items.SUGAR),
@@ -70,15 +68,11 @@ public enum MyPotion {
     Weakness(Potions.WEAKNESS, Items.FERMENTED_SPIDER_EYE),
     WeaknessLong(Potions.LONG_WEAKNESS, Items.FERMENTED_SPIDER_EYE, Items.REDSTONE);
 
-    public final Supplier<ItemStack> potion;
+    public final ItemStack potion;
     public final Item[] ingredients;
 
-    MyPotion(Holder<Potion> potion, Item... ingredients) {
-        this.potion = () -> {
-            ItemStack stack = DisplayItemUtils.toStack(Items.POTION);
-            stack.set(DataComponents.POTION_CONTENTS, new PotionContents(potion));
-            return stack;
-        };
+    MyPotion(RegistryEntry<Potion> potion, Item... ingredients) {
+        this.potion = PotionContentsComponent.createStack(Items.POTION, potion);
         this.ingredients = ingredients;
     }
 }

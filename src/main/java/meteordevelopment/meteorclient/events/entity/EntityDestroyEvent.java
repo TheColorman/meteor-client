@@ -5,7 +5,7 @@
 
 package meteordevelopment.meteorclient.events.entity;
 
-import net.minecraft.world.entity.Entity;
+import net.minecraft.entity.Entity;
 
 public class EntityDestroyEvent {
     private static final EntityDestroyEvent INSTANCE = new EntityDestroyEvent();

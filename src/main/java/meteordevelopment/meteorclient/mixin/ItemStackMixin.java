@@ -11,10 +11,10 @@ import meteordevelopment.meteorclient.events.entity.player.FinishUsingItemEvent;
 import meteordevelopment.meteorclient.events.entity.player.StoppedUsingItemEvent;
 import meteordevelopment.meteorclient.events.game.ItemStackTooltipEvent;
 import meteordevelopment.meteorclient.utils.Utils;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.text.Text;
+import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -27,8 +27,8 @@ import static meteordevelopment.meteorclient.MeteorClient.mc;
 
 @Mixin(ItemStack.class)
 public abstract class ItemStackMixin {
-    @ModifyReturnValue(method = "getTooltipLines", at = @At("RETURN"))
-    private List<Component> onGetTooltipLines(List<Component> original) {
+    @ModifyReturnValue(method = "getTooltip", at = @At("RETURN"))
+    private List<Text> onGetTooltip(List<Text> original) {
         if (Utils.canUpdate()) {
             ItemStackTooltipEvent event = MeteorClient.EVENT_BUS.post(new ItemStackTooltipEvent((ItemStack) (Object) this, original));
             return event.list();
@@ -37,16 +37,16 @@ public abstract class ItemStackMixin {
         return original;
     }
 
-    @Inject(method = "finishUsingItem", at = @At("HEAD"))
-    private void onFinishUsingItem(Level level, LivingEntity livingEntity, CallbackInfoReturnable<ItemStack> cir) {
-        if (livingEntity == mc.player) {
+    @Inject(method = "finishUsing", at = @At("HEAD"))
+    private void onFinishUsing(World world, LivingEntity user, CallbackInfoReturnable<ItemStack> info) {
+        if (user == mc.player) {
             MeteorClient.EVENT_BUS.post(FinishUsingItemEvent.get((ItemStack) (Object) this));
         }
     }
 
-    @Inject(method = "releaseUsing", at = @At("HEAD"))
-    private void onReleaseUsing(Level level, LivingEntity entity, int remainingTime, CallbackInfo ci) {
-        if (entity == mc.player) {
+    @Inject(method = "onStoppedUsing", at = @At("HEAD"))
+    private void onStoppedUsing(World world, LivingEntity user, int remainingUseTicks, CallbackInfo info) {
+        if (user == mc.player) {
             MeteorClient.EVENT_BUS.post(StoppedUsingItemEvent.get((ItemStack) (Object) this));
         }
     }

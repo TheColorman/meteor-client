@@ -7,14 +7,14 @@ package meteordevelopment.meteorclient.settings;
 
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import meteordevelopment.meteorclient.utils.entity.EntityUtils;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
-import net.minecraft.resources.Identifier;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.MobCategory;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.SpawnGroup;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtList;
+import net.minecraft.nbt.NbtString;
+import net.minecraft.registry.Registries;
+import net.minecraft.util.Identifier;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,40 +45,39 @@ public class EntityTypeListSetting extends Setting<Set<EntityType<?>>> {
 
         try {
             for (String value : values) {
-                EntityType<?> entity = parseId(BuiltInRegistries.ENTITY_TYPE, value);
+                EntityType<?> entity = parseId(Registries.ENTITY_TYPE, value);
                 if (entity != null) entities.add(entity);
                 else {
                     String lowerValue = value.trim().toLowerCase();
                     if (!groups.contains(lowerValue)) continue;
 
-                    for (EntityType<?> entityType : BuiltInRegistries.ENTITY_TYPE) {
+                    for (EntityType<?> entityType : Registries.ENTITY_TYPE) {
                         if (filter != null && !filter.test(entityType)) continue;
 
                         switch (lowerValue) {
                             case "animal" -> {
-                                if (entityType.getCategory() == MobCategory.CREATURE) entities.add(entityType);
+                                if (entityType.getSpawnGroup() == SpawnGroup.CREATURE) entities.add(entityType);
                             }
                             case "wateranimal" -> {
-                                if (entityType.getCategory() == MobCategory.WATER_AMBIENT
-                                    || entityType.getCategory() == MobCategory.WATER_CREATURE
-                                    || entityType.getCategory() == MobCategory.UNDERGROUND_WATER_CREATURE
-                                    || entityType.getCategory() == MobCategory.AXOLOTLS) entities.add(entityType);
+                                if (entityType.getSpawnGroup() == SpawnGroup.WATER_AMBIENT
+                                    || entityType.getSpawnGroup() == SpawnGroup.WATER_CREATURE
+                                    || entityType.getSpawnGroup() == SpawnGroup.UNDERGROUND_WATER_CREATURE
+                                    || entityType.getSpawnGroup() == SpawnGroup.AXOLOTLS) entities.add(entityType);
                             }
                             case "monster" -> {
-                                if (entityType.getCategory() == MobCategory.MONSTER) entities.add(entityType);
+                                if (entityType.getSpawnGroup() == SpawnGroup.MONSTER) entities.add(entityType);
                             }
                             case "ambient" -> {
-                                if (entityType.getCategory() == MobCategory.AMBIENT) entities.add(entityType);
+                                if (entityType.getSpawnGroup() == SpawnGroup.AMBIENT) entities.add(entityType);
                             }
                             case "misc" -> {
-                                if (entityType.getCategory() == MobCategory.MISC) entities.add(entityType);
+                                if (entityType.getSpawnGroup() == SpawnGroup.MISC) entities.add(entityType);
                             }
                         }
                     }
                 }
             }
-        } catch (Exception _) {
-        }
+        } catch (Exception ignored) {}
 
         return entities;
     }
@@ -92,9 +91,8 @@ public class EntityTypeListSetting extends Setting<Set<EntityType<?>>> {
     public List<String> getSuggestions() {
         if (suggestions == null) {
             suggestions = new ArrayList<>(groups);
-            for (EntityType<?> entityType : BuiltInRegistries.ENTITY_TYPE) {
-                if (filter == null || filter.test(entityType))
-                    suggestions.add(BuiltInRegistries.ENTITY_TYPE.getKey(entityType).toString());
+            for (EntityType<?> entityType : Registries.ENTITY_TYPE) {
+                if (filter == null || filter.test(entityType)) suggestions.add(Registries.ENTITY_TYPE.getId(entityType).toString());
             }
         }
 
@@ -102,10 +100,10 @@ public class EntityTypeListSetting extends Setting<Set<EntityType<?>>> {
     }
 
     @Override
-    public CompoundTag save(CompoundTag tag) {
-        ListTag valueTag = new ListTag();
+    public NbtCompound save(NbtCompound tag) {
+        NbtList valueTag = new NbtList();
         for (EntityType<?> entityType : get()) {
-            valueTag.add(StringTag.valueOf(BuiltInRegistries.ENTITY_TYPE.getKey(entityType).toString()));
+            valueTag.add(NbtString.of(Registries.ENTITY_TYPE.getId(entityType).toString()));
         }
         tag.put("value", valueTag);
 
@@ -113,12 +111,12 @@ public class EntityTypeListSetting extends Setting<Set<EntityType<?>>> {
     }
 
     @Override
-    public Set<EntityType<?>> load(CompoundTag tag) {
+    public Set<EntityType<?>> load(NbtCompound tag) {
         get().clear();
 
-        ListTag valueTag = tag.getListOrEmpty("value");
-        for (Tag tagI : valueTag) {
-            EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.getValue(Identifier.parse(tagI.asString().orElse("")));
+        NbtList valueTag = tag.getListOrEmpty("value");
+        for (NbtElement tagI : valueTag) {
+            EntityType<?> type = Registries.ENTITY_TYPE.get(Identifier.of(tagI.asString().orElse("")));
             if (filter == null || filter.test(type)) get().add(type);
         }
 
@@ -141,7 +139,7 @@ public class EntityTypeListSetting extends Setting<Set<EntityType<?>>> {
             return this;
         }
 
-        public Builder filter(Predicate<EntityType<?>> filter) {
+        public Builder filter(Predicate<EntityType<?>> filter){
             this.filter = filter;
             return this;
         }

@@ -7,17 +7,17 @@ package meteordevelopment.meteorclient.events.meteor;
 
 import meteordevelopment.meteorclient.events.Cancellable;
 import meteordevelopment.meteorclient.utils.misc.input.KeyAction;
-import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.input.MouseButtonInfo;
+import net.minecraft.client.gui.Click;
+import net.minecraft.client.input.MouseInput;
 
 public class MouseClickEvent extends Cancellable {
     private static final MouseClickEvent INSTANCE = new MouseClickEvent();
 
-    public MouseButtonEvent click;
-    public MouseButtonInfo input;
+    public Click click;
+    public MouseInput input;
     public KeyAction action;
 
-    public static MouseClickEvent get(MouseButtonEvent click, KeyAction action) {
+    public static MouseClickEvent get(Click click, KeyAction action) {
         INSTANCE.setCancelled(false);
         INSTANCE.click = click;
         INSTANCE.input = click.buttonInfo();

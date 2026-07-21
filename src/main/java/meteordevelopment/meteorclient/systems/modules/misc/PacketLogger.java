@@ -13,8 +13,8 @@ import meteordevelopment.meteorclient.systems.modules.Categories;
 import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.orbit.EventHandler;
 import meteordevelopment.orbit.EventPriority;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.PacketType;
+import net.minecraft.network.packet.Packet;
+import net.minecraft.network.packet.PacketType;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -248,7 +248,7 @@ public class PacketLogger extends Module {
             try {
                 fileWriter.flush();
                 fileWriter.close();
-            } catch (IOException _) {
+            } catch (IOException ignored) {
                 // Safe to ignore on close or rotation
             }
             fileWriter = null;
@@ -268,7 +268,7 @@ public class PacketLogger extends Module {
                 if (!name.startsWith("packets-") || !name.endsWith(".log")) continue;
                 try {
                     logFiles.add(new LogFileEntry(p, Files.size(p), Files.getLastModifiedTime(p).toMillis()));
-                } catch (IOException _) {
+                } catch (IOException ignored) {
                     // Skip files that can't be accessed
                 }
             }

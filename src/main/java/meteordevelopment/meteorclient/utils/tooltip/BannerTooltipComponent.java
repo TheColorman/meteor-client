@@ -5,70 +5,68 @@
 
 package meteordevelopment.meteorclient.utils.tooltip;
 
-import meteordevelopment.meteorclient.mixin.GuiGraphicsExtractorAccessor;
+import meteordevelopment.meteorclient.mixin.DrawContextAccessor;
 import meteordevelopment.meteorclient.utils.render.CustomBannerGuiElementRenderState;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
-import net.minecraft.client.model.geom.ModelLayers;
-import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.model.object.banner.BannerFlagModel;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.world.item.BannerItem;
-import net.minecraft.world.item.DyeColor;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.entity.BannerPatternLayers;
+import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.tooltip.TooltipComponent;
+import net.minecraft.client.model.ModelPart;
+import net.minecraft.client.render.block.entity.model.BannerFlagBlockModel;
+import net.minecraft.client.render.entity.model.EntityModelLayers;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.BannerPatternsComponent;
+import net.minecraft.item.BannerItem;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.DyeColor;
 
 import static meteordevelopment.meteorclient.MeteorClient.mc;
 
-public class BannerTooltipComponent implements MeteorTooltipData, ClientTooltipComponent {
+public class BannerTooltipComponent implements MeteorTooltipData, TooltipComponent {
     private final DyeColor color;
-    private final BannerPatternLayers patterns;
-    private final BannerFlagModel bannerFlag;
+    private final BannerPatternsComponent patterns;
+    private final BannerFlagBlockModel bannerFlag;
 
-    /**
-     * Should only be used when the ItemStack is a banner
-     */
+    /** Should only be used when the ItemStack is a banner */
     public BannerTooltipComponent(ItemStack banner) {
         this.color = ((BannerItem) banner.getItem()).getColor();
-        this.patterns = banner.getOrDefault(DataComponents.BANNER_PATTERNS, BannerPatternLayers.EMPTY);
-        ModelPart modelPart = mc.getEntityModels().bakeLayer(ModelLayers.STANDING_BANNER_FLAG);
-        this.bannerFlag = new BannerFlagModel(modelPart);
+        this.patterns = banner.getOrDefault(DataComponentTypes.BANNER_PATTERNS, BannerPatternsComponent.DEFAULT);
+        ModelPart modelPart = mc.getLoadedEntityModels().getModelPart(EntityModelLayers.STANDING_BANNER_FLAG);
+        this.bannerFlag = new BannerFlagBlockModel(modelPart);
     }
 
-    public BannerTooltipComponent(DyeColor color, BannerPatternLayers patterns) {
+    public BannerTooltipComponent(DyeColor color, BannerPatternsComponent patterns) {
         this.color = color;
         this.patterns = patterns;
-        ModelPart modelPart = mc.getEntityModels().bakeLayer(ModelLayers.STANDING_BANNER_FLAG);
-        this.bannerFlag = new BannerFlagModel(modelPart);
+        ModelPart modelPart = mc.getLoadedEntityModels().getModelPart(EntityModelLayers.STANDING_BANNER_FLAG);
+        this.bannerFlag = new BannerFlagBlockModel(modelPart);
     }
 
     @Override
-    public ClientTooltipComponent getComponent() {
+    public TooltipComponent getComponent() {
         return this;
     }
 
     @Override
-    public int getHeight(Font textRenderer) {
+    public int getHeight(TextRenderer textRenderer) {
         return 40 * 2;
     }
 
     @Override
-    public int getWidth(Font textRenderer) {
+    public int getWidth(TextRenderer textRenderer) {
         return 20 * 2;
     }
 
     @Override
-    public void extractImage(Font textRenderer, int x, int y, int width, int height, GuiGraphicsExtractor graphics) {
+    public void drawItems(TextRenderer textRenderer, int x, int y, int width, int height, DrawContext context) {
         var centerX = width / 2 - getWidth(null) / 2;
 
-        GuiGraphicsExtractorAccessor contextAccessor = (GuiGraphicsExtractorAccessor) graphics;
+        DrawContextAccessor contextAccessor = (DrawContextAccessor) context;
 
-        contextAccessor.getGuiRenderState().addPicturesInPictureState(new CustomBannerGuiElementRenderState(
+        contextAccessor.getState().addSpecialElement(new CustomBannerGuiElementRenderState(
             bannerFlag, color, patterns,
             centerX + x, y,
             centerX + x + getWidth(null), y + getHeight(null),
-            contextAccessor.getScissorStack().peek(),
+            contextAccessor.getScissorStack().peekLast(),
             16 * 2
         ));
     }

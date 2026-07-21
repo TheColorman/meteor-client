@@ -6,7 +6,7 @@
 package meteordevelopment.meteorclient.systems.modules.render;
 
 import meteordevelopment.meteorclient.MeteorClient;
-import meteordevelopment.meteorclient.events.meteor.KeyInputEvent;
+import meteordevelopment.meteorclient.events.meteor.KeyEvent;
 import meteordevelopment.meteorclient.events.meteor.MouseScrollEvent;
 import meteordevelopment.meteorclient.events.render.GetFovEvent;
 import meteordevelopment.meteorclient.events.render.Render3DEvent;
@@ -18,7 +18,7 @@ import meteordevelopment.meteorclient.settings.SettingGroup;
 import meteordevelopment.meteorclient.systems.modules.Categories;
 import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.orbit.EventHandler;
-import net.minecraft.util.Mth;
+import net.minecraft.util.math.MathHelper;
 import org.lwjgl.glfw.GLFW;
 
 public class Zoom extends Module {
@@ -86,48 +86,48 @@ public class Zoom extends Module {
     @Override
     public void onActivate() {
         if (!enabled) {
-            preCinematic = mc.options.smoothCamera;
-            preMouseSensitivity = mc.options.sensitivity().get();
+            preCinematic = mc.options.smoothCameraEnabled;
+            preMouseSensitivity = mc.options.getMouseSensitivity().getValue();
             value = zoom.get();
-            lastFov = mc.options.fov().get();
+            lastFov = mc.options.getFov().getValue();
             time = 0.001;
 
             MeteorClient.EVENT_BUS.subscribe(this);
             enabled = true;
         }
 
-        if (hideHud.get() && !mc.options.hideGui) {
+        if (hideHud.get() && !mc.options.hudHidden) {
             hudManualToggled = false;
-            mc.options.hideGui = true;
+            mc.options.hudHidden = true;
         }
     }
 
     @Override
     public void onDeactivate() {
         if (hideHud.get() && !hudManualToggled) {
-            mc.options.hideGui = false;
+            mc.options.hudHidden = false;
         }
     }
 
     @EventHandler
-    public void onKeyPressed(KeyInputEvent event) {
+    public void onKeyPressed(KeyEvent event) {
         if (event.key() != GLFW.GLFW_KEY_F1) return;
         hudManualToggled = true;
     }
 
     public void onStop() {
-        mc.options.smoothCamera = preCinematic;
-        mc.options.sensitivity().set(preMouseSensitivity);
+        mc.options.smoothCameraEnabled = preCinematic;
+        mc.options.getMouseSensitivity().setValue(preMouseSensitivity);
 
-        mc.levelRenderer.needsUpdate();
+        mc.worldRenderer.scheduleTerrainUpdate();
     }
 
     @EventHandler
     private void onTick(TickEvent.Post event) {
-        mc.options.smoothCamera = cinematic.get();
+        mc.options.smoothCameraEnabled = cinematic.get();
 
         if (!cinematic.get()) {
-            mc.options.sensitivity().set(preMouseSensitivity / Math.max(getScaling() * 0.5, 1));
+            mc.options.getMouseSensitivity().setValue(preMouseSensitivity / Math.max(getScaling() * 0.5, 1));
         }
 
         if (time == 0) {
@@ -160,20 +160,20 @@ public class Zoom extends Module {
         if (isActive()) time += event.frameTime * 5;
         else time -= event.frameTime * 5;
 
-        time = Mth.clamp(time, 0, 1);
+        time = MathHelper.clamp(time, 0, 1);
     }
 
     @EventHandler
     private void onGetFov(GetFovEvent event) {
         event.fov /= (float) getScaling();
 
-        if (lastFov != event.fov) mc.levelRenderer.needsUpdate();
+        if (lastFov != event.fov) mc.worldRenderer.scheduleTerrainUpdate();
         lastFov = event.fov;
     }
 
     public double getScaling() {
         double delta = time < 0.5 ? 4 * time * time * time : 1 - Math.pow(-2 * time + 2, 3) / 2; // Ease in out cubic
-        return Mth.lerp(delta, 1, value);
+        return MathHelper.lerp(delta, 1, value);
     }
 
     public boolean renderHands() {

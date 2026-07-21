@@ -10,27 +10,27 @@ import meteordevelopment.meteorclient.gui.screens.settings.base.DynamicRegistryL
 import meteordevelopment.meteorclient.gui.widgets.WWidget;
 import meteordevelopment.meteorclient.settings.Setting;
 import meteordevelopment.meteorclient.utils.misc.Names;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.enchantment.Enchantment;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
 
 import java.util.Set;
 
 public class EnchantmentListSettingScreen extends DynamicRegistryListSettingScreen<Enchantment> {
-    public EnchantmentListSettingScreen(GuiTheme theme, Setting<Set<ResourceKey<Enchantment>>> setting) {
-        super(theme, "Select Enchantments", setting, setting.get(), Registries.ENCHANTMENT);
+    public EnchantmentListSettingScreen(GuiTheme theme, Setting<Set<RegistryKey<Enchantment>>> setting) {
+        super(theme, "Select Enchantments", setting, setting.get(), RegistryKeys.ENCHANTMENT);
     }
 
     @Override
-    protected WWidget getValueWidget(ResourceKey<Enchantment> value) {
+    protected WWidget getValueWidget(RegistryKey<Enchantment> value) {
         return theme.label(Names.get(value));
     }
 
     @Override
-    protected String[] getValueNames(ResourceKey<Enchantment> value) {
+    protected String[] getValueNames(RegistryKey<Enchantment> value) {
         return new String[]{
             Names.get(value),
-            value.identifier().toString()
+            value.getValue().toString()
         };
     }
 }

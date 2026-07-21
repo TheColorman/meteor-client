@@ -14,9 +14,9 @@ import meteordevelopment.meteorclient.systems.modules.Modules;
 import meteordevelopment.meteorclient.systems.modules.render.marker.Marker;
 import meteordevelopment.meteorclient.utils.Utils;
 import meteordevelopment.orbit.EventHandler;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.phys.HitResult;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.BlockPos;
 
 import static meteordevelopment.meteorclient.MeteorClient.mc;
 
@@ -49,14 +49,14 @@ public class WBlockPosEdit extends WHorizontalList {
 
                 clicking = true;
                 MeteorClient.EVENT_BUS.subscribe(this);
-                previousScreen = mc.screen;
+                previousScreen = mc.currentScreen;
                 mc.setScreen(null);
             };
 
             WButton here = add(theme.confirmedButton("Set Here", "Confirm")).expandX().widget();
             here.action = () -> {
                 lastValue = value;
-                set(new BlockPos(mc.player.blockPosition()));
+                set(new BlockPos(mc.player.getBlockPos()));
                 newValueCheck();
 
                 clear();
@@ -100,12 +100,13 @@ public class WBlockPosEdit extends WHorizontalList {
         if (c == '-' && text.isEmpty()) {
             good = true;
             validate = false;
-        } else good = Character.isDigit(c);
+        }
+        else good = Character.isDigit(c);
 
         if (good && validate) {
             try {
                 Integer.parseInt(text + c);
-            } catch (NumberFormatException _) {
+            } catch (NumberFormatException ignored) {
                 good = false;
             }
         }
@@ -132,8 +133,7 @@ public class WBlockPosEdit extends WHorizontalList {
             else {
                 try {
                     set(new BlockPos(Integer.parseInt(textBoxX.get()), value.getY(), value.getZ()));
-                } catch (NumberFormatException _) {
-                }
+                } catch (NumberFormatException ignored) {}
             }
             newValueCheck();
         };
@@ -144,8 +144,7 @@ public class WBlockPosEdit extends WHorizontalList {
             else {
                 try {
                     set(new BlockPos(value.getX(), Integer.parseInt(textBoxY.get()), value.getZ()));
-                } catch (NumberFormatException _) {
-                }
+                } catch (NumberFormatException ignored) {}
             }
             newValueCheck();
         };
@@ -156,8 +155,7 @@ public class WBlockPosEdit extends WHorizontalList {
             else {
                 try {
                     set(new BlockPos(value.getX(), value.getY(), Integer.parseInt(textBoxZ.get())));
-                } catch (NumberFormatException _) {
-                }
+                } catch (NumberFormatException ignored) {}
             }
             newValueCheck();
         };

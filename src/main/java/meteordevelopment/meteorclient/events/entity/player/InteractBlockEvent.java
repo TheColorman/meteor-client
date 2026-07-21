@@ -6,16 +6,16 @@
 package meteordevelopment.meteorclient.events.entity.player;
 
 import meteordevelopment.meteorclient.events.Cancellable;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.util.Hand;
+import net.minecraft.util.hit.BlockHitResult;
 
 public class InteractBlockEvent extends Cancellable {
     private static final InteractBlockEvent INSTANCE = new InteractBlockEvent();
 
-    public InteractionHand hand;
+    public Hand hand;
     public BlockHitResult result;
 
-    public static InteractBlockEvent get(InteractionHand hand, BlockHitResult result) {
+    public static InteractBlockEvent get(Hand hand, BlockHitResult result) {
         INSTANCE.setCancelled(false);
         INSTANCE.hand = hand;
         INSTANCE.result = result;

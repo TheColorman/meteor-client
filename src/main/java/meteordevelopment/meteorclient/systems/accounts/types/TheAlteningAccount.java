@@ -14,8 +14,8 @@ import meteordevelopment.meteorclient.systems.accounts.TokenAccount;
 import meteordevelopment.meteorclient.utils.misc.NbtException;
 import meteordevelopment.meteorclient.utils.network.Http;
 import com.mojang.util.UndashedUuid;
-import net.minecraft.client.User;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.client.session.Session;
+import net.minecraft.nbt.NbtCompound;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -24,7 +24,7 @@ import static meteordevelopment.meteorclient.MeteorClient.mc;
 
 public class TheAlteningAccount extends Account<TheAlteningAccount> implements TokenAccount {
     private static final Environment ENVIRONMENT = new Environment("http://sessionserver.thealtening.com", "http://authserver.thealtening.com", "https://api.mojang.com", "The Altening");
-    private static final YggdrasilAuthenticationService SERVICE = new YggdrasilAuthenticationService(mc.getProxy(), ENVIRONMENT);
+    private static final YggdrasilAuthenticationService SERVICE = new YggdrasilAuthenticationService(mc.getNetworkProxy(), ENVIRONMENT);
     private String token;
     private String accessToken;
 
@@ -48,7 +48,7 @@ public class TheAlteningAccount extends Account<TheAlteningAccount> implements T
             cache.loadHead();
 
             return true;
-        } catch (Exception _) {
+        } catch (Exception e) {
             MeteorClient.LOG.error("Failed to fetch info for TheAltening account!");
             return false;
         }
@@ -60,9 +60,9 @@ public class TheAlteningAccount extends Account<TheAlteningAccount> implements T
         applyLoginEnvironment(SERVICE);
 
         try {
-            setSession(new User(cache.username, UndashedUuid.fromStringLenient(cache.uuid), accessToken, Optional.empty(), Optional.empty()));
+            setSession(new Session(cache.username, UndashedUuid.fromStringLenient(cache.uuid), accessToken, Optional.empty(), Optional.empty()));
             return true;
-        } catch (Exception _) {
+        } catch (Exception e) {
             MeteorClient.LOG.error("Failed to login with TheAltening.");
             return false;
         }
@@ -80,8 +80,8 @@ public class TheAlteningAccount extends Account<TheAlteningAccount> implements T
     }
 
     @Override
-    public CompoundTag toTag() {
-        CompoundTag tag = new CompoundTag();
+    public NbtCompound toTag() {
+        NbtCompound tag = new NbtCompound();
 
         tag.putString("type", type.name());
         tag.putString("name", name);
@@ -92,9 +92,8 @@ public class TheAlteningAccount extends Account<TheAlteningAccount> implements T
     }
 
     @Override
-    public TheAlteningAccount fromTag(CompoundTag tag) {
-        if (tag.getString("name").isEmpty() || tag.getCompound("cache").isEmpty() || tag.getString("token").isEmpty())
-            throw new NbtException();
+    public TheAlteningAccount fromTag(NbtCompound tag) {
+        if (tag.getString("name").isEmpty() || tag.getCompound("cache").isEmpty() || tag.getString("token").isEmpty()) throw new NbtException();
 
         name = tag.getString("name").get();
         token = tag.getString("token").get();

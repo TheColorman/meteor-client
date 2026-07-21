@@ -19,7 +19,8 @@ public class JsonDateDeserializer implements JsonDeserializer<Date> {
     public Date deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
         try {
             return Date.from(Instant.parse(jsonElement.getAsString()));
-        } catch (Exception _) {
+        }
+        catch (Exception ignored) {
             return null;
         }
     }

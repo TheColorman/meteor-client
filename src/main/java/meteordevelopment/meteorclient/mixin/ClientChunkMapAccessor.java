@@ -5,15 +5,15 @@
 
 package meteordevelopment.meteorclient.mixin;
 
-import net.minecraft.client.multiplayer.ClientChunkCache;
-import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.client.world.ClientChunkManager;
+import net.minecraft.world.chunk.WorldChunk;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
-@Mixin(ClientChunkCache.Storage.class)
+@Mixin(ClientChunkManager.ClientChunkMap.class)
 public interface ClientChunkMapAccessor {
     @Accessor("chunks")
-    AtomicReferenceArray<LevelChunk> meteor$getChunks();
+    AtomicReferenceArray<WorldChunk> meteor$getChunks();
 }

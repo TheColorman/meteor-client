@@ -13,7 +13,7 @@ import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.meteorclient.utils.misc.Pool;
 import meteordevelopment.meteorclient.utils.render.color.SettingColor;
 import meteordevelopment.orbit.EventHandler;
-import net.minecraft.world.level.dimension.DimensionType;
+import net.minecraft.world.dimension.DimensionType;
 
 import java.util.ArrayDeque;
 import java.util.Queue;
@@ -62,7 +62,7 @@ public class Breadcrumbs extends Module {
         section = sectionPool.get();
         section.set1();
 
-        lastDimension = mc.level.dimensionType();
+        lastDimension = mc.world.getDimension();
     }
 
     @Override
@@ -73,9 +73,9 @@ public class Breadcrumbs extends Module {
 
     @EventHandler
     private void onTick(TickEvent.Post event) {
-        if (!mc.getConnection().hasClientLoaded()) return;
+        if (!mc.getNetworkHandler().isLoaded()) return;
 
-        if (lastDimension != mc.level.dimensionType()) {
+        if (lastDimension != mc.world.getDimension()) {
             sectionPool.freeAll(sections);
             sections.clear();
         }
@@ -93,7 +93,7 @@ public class Breadcrumbs extends Module {
             section.set1();
         }
 
-        lastDimension = mc.level.dimensionType();
+        lastDimension = mc.world.getDimension();
     }
 
     @EventHandler

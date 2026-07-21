@@ -11,11 +11,11 @@ import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.meteorclient.systems.modules.Modules;
 import meteordevelopment.meteorclient.utils.Utils;
 import meteordevelopment.meteorclient.utils.player.ChatUtils;
-import net.minecraft.ChatFormatting;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.HoverEvent;
-import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.command.CommandSource;
+import net.minecraft.text.HoverEvent;
+import net.minecraft.text.MutableText;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 
 import java.util.List;
 
@@ -25,8 +25,8 @@ public class BindsCommand extends Command {
     }
 
     @Override
-    public void build(LiteralArgumentBuilder<ClientSuggestionProvider> builder) {
-        builder.executes(_ -> {
+    public void build(LiteralArgumentBuilder<CommandSource> builder) {
+        builder.executes(context -> {
             // Modules
             List<Module> modules = Modules.get().getAll().stream()
                 .filter(module -> module.keybind.isSet())
@@ -37,16 +37,16 @@ public class BindsCommand extends Command {
             for (Module module : modules) {
                 HoverEvent hoverEvent = new HoverEvent.ShowText(getTooltip(module));
 
-                MutableComponent text = Component.literal(module.title).withStyle(ChatFormatting.WHITE);
+                MutableText text = Text.literal(module.title).formatted(Formatting.WHITE);
                 text.setStyle(text.getStyle().withHoverEvent(hoverEvent));
 
-                MutableComponent sep = Component.literal(" - ");
+                MutableText sep = Text.literal(" - ");
                 sep.setStyle(sep.getStyle().withHoverEvent(hoverEvent));
-                text.append(sep.withStyle(ChatFormatting.GRAY));
+                text.append(sep.formatted(Formatting.GRAY));
 
-                MutableComponent key = Component.literal(module.keybind.toString());
+                MutableText key = Text.literal(module.keybind.toString());
                 key.setStyle(key.getStyle().withHoverEvent(hoverEvent));
-                text.append(key.withStyle(ChatFormatting.GRAY));
+                text.append(key.formatted(Formatting.GRAY));
 
                 ChatUtils.sendMsg(text);
             }
@@ -55,9 +55,9 @@ public class BindsCommand extends Command {
         });
     }
 
-    private MutableComponent getTooltip(Module module) {
-        MutableComponent tooltip = Component.literal(Utils.nameToTitle(module.title)).withStyle(ChatFormatting.BLUE, ChatFormatting.BOLD).append("\n\n");
-        tooltip.append(Component.literal(module.description).withStyle(ChatFormatting.WHITE));
+    private MutableText getTooltip(Module module) {
+        MutableText tooltip = Text.literal(Utils.nameToTitle(module.title)).formatted(Formatting.BLUE, Formatting.BOLD).append("\n\n");
+        tooltip.append(Text.literal(module.description).formatted(Formatting.WHITE));
         return tooltip;
     }
 }

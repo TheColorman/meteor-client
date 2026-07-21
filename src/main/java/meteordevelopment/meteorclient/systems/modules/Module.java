@@ -17,17 +17,17 @@ import meteordevelopment.meteorclient.utils.misc.ISerializable;
 import meteordevelopment.meteorclient.utils.misc.Keybind;
 import meteordevelopment.meteorclient.utils.player.ChatUtils;
 import meteordevelopment.meteorclient.utils.render.color.Color;
-import net.minecraft.ChatFormatting;
-import net.minecraft.client.Minecraft;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
-import net.minecraft.network.chat.Component;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
 public abstract class Module implements ISerializable<Module>, Comparable<Module> {
-    protected final Minecraft mc;
+    protected final MinecraftClient mc;
 
     public final Category category;
     public final String name;
@@ -51,10 +51,9 @@ public abstract class Module implements ISerializable<Module>, Comparable<Module
     public boolean favorite = false;
 
     public Module(Category category, String name, String description, String... aliases) {
-        if (name.contains(" "))
-            MeteorClient.LOG.warn("Module '{}' contains invalid characters in its name making it incompatible with Meteor Client commands.", name);
+        if (name.contains(" ")) MeteorClient.LOG.warn("Module '{}' contains invalid characters in its name making it incompatible with Meteor Client commands.", name);
 
-        this.mc = Minecraft.getInstance();
+        this.mc = MinecraftClient.getInstance();
         this.category = category;
         this.name = name;
         this.title = Utils.nameToTitle(name);
@@ -81,11 +80,8 @@ public abstract class Module implements ISerializable<Module>, Comparable<Module
         return null;
     }
 
-    public void onActivate() {
-    }
-
-    public void onDeactivate() {
-    }
+    public void onActivate() {}
+    public void onDeactivate() {}
 
     public void toggle() {
         if (!active) {
@@ -98,7 +94,8 @@ public abstract class Module implements ISerializable<Module>, Comparable<Module
                 if (autoSubscribe) MeteorClient.EVENT_BUS.subscribe(this);
                 onActivate();
             }
-        } else {
+        }
+        else {
             if (runInMainMenu || Utils.canUpdate()) {
                 if (autoSubscribe) MeteorClient.EVENT_BUS.unsubscribe(this);
                 onDeactivate();
@@ -120,11 +117,11 @@ public abstract class Module implements ISerializable<Module>, Comparable<Module
     public void sendToggledMsg() {
         if (Config.get().chatFeedback.get() && chatFeedback) {
             ChatUtils.forceNextPrefixClass(getClass());
-            ChatUtils.sendMsg(this.hashCode(), ChatFormatting.GRAY, "Toggled (highlight)%s(default) %s(default).", title, isActive() ? ChatFormatting.GREEN + "on" : ChatFormatting.RED + "off");
+            ChatUtils.sendMsg(this.hashCode(), Formatting.GRAY, "Toggled (highlight)%s(default) %s(default).", title, isActive() ? Formatting.GREEN + "on" : Formatting.RED + "off");
         }
     }
 
-    public void info(Component message) {
+    public void info(Text message) {
         ChatUtils.forceNextPrefixClass(getClass());
         ChatUtils.sendMsg(title, message);
     }
@@ -153,9 +150,9 @@ public abstract class Module implements ISerializable<Module>, Comparable<Module
     }
 
     @Override
-    public CompoundTag toTag() {
+    public NbtCompound toTag() {
         if (!serialize) return null;
-        CompoundTag tag = new CompoundTag();
+        NbtCompound tag = new NbtCompound();
 
         tag.putString("name", name);
         tag.put("keybind", keybind.toTag());
@@ -169,18 +166,18 @@ public abstract class Module implements ISerializable<Module>, Comparable<Module
     }
 
     @Override
-    public Module fromTag(CompoundTag tag) {
+    public Module fromTag(NbtCompound tag) {
         // General
         keybind.fromTag(tag.getCompoundOrEmpty("keybind"));
-        toggleOnBindRelease = tag.getBooleanOr("toggleOnKeyRelease", false);
-        chatFeedback = !tag.contains("chatFeedback") || tag.getBooleanOr("chatFeedback", false);
-        favorite = tag.getBooleanOr("favorite", false);
+        toggleOnBindRelease = tag.getBoolean("toggleOnKeyRelease", false);
+        chatFeedback = !tag.contains("chatFeedback") || tag.getBoolean("chatFeedback", false);
+        favorite = tag.getBoolean("favorite", false);
 
         // Settings
-        Tag settingsTag = tag.get("settings");
-        if (settingsTag instanceof CompoundTag compoundTag) settings.fromTag(compoundTag);
+        NbtElement settingsTag = tag.get("settings");
+        if (settingsTag instanceof NbtCompound) settings.fromTag((NbtCompound) settingsTag);
 
-        boolean active = tag.getBooleanOr("active", false);
+        boolean active = tag.getBoolean("active", false);
         if (active != isActive()) toggle();
 
         return this;

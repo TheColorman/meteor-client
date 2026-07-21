@@ -13,12 +13,12 @@ import meteordevelopment.meteorclient.systems.config.Config;
 import meteordevelopment.meteorclient.systems.modules.Categories;
 import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.meteorclient.utils.player.InvUtils;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.network.protocol.game.ServerboundContainerClosePacket;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.network.packet.c2s.play.CloseHandledScreenC2SPacket;
 
 public class ChestSwap extends Module {
     private final SettingGroup sgGeneral = settings.getDefaultGroup();
@@ -60,11 +60,11 @@ public class ChestSwap extends Module {
     }
 
     public void swap() {
-        ItemStack currentItem = mc.player.getItemBySlot(EquipmentSlot.CHEST);
+        ItemStack currentItem = mc.player.getEquippedStack(EquipmentSlot.CHEST);
 
-        if (currentItem.has(DataComponents.GLIDER)) {
+        if (currentItem.contains(DataComponentTypes.GLIDER)) {
             equipChestplate();
-        } else if (currentItem.has(DataComponents.EQUIPPABLE) && currentItem.get(DataComponents.EQUIPPABLE).slot().getIndex() == EquipmentSlot.CHEST.getIndex()) {
+        } else if (currentItem.contains(DataComponentTypes.EQUIPPABLE) && currentItem.get(DataComponentTypes.EQUIPPABLE).slot().getEntitySlotId() == EquipmentSlot.CHEST.getEntitySlotId()) {
             equipElytra();
         } else {
             if (!equipChestplate()) equipElytra();
@@ -75,8 +75,8 @@ public class ChestSwap extends Module {
         int bestSlot = -1;
         boolean breakLoop = false;
 
-        for (int i = 0; i < mc.player.getInventory().getNonEquipmentItems().size(); i++) {
-            Item item = mc.player.getInventory().getNonEquipmentItems().get(i).getItem();
+        for (int i = 0; i < mc.player.getInventory().getMainStacks().size(); i++) {
+            Item item = mc.player.getInventory().getMainStacks().get(i).getItem();
 
             switch (chestplate.get()) {
                 case Diamond:
@@ -117,10 +117,10 @@ public class ChestSwap extends Module {
     }
 
     private void equipElytra() {
-        for (int i = 0; i < mc.player.getInventory().getNonEquipmentItems().size(); i++) {
-            ItemStack item = mc.player.getInventory().getNonEquipmentItems().get(i);
+        for (int i = 0; i < mc.player.getInventory().getMainStacks().size(); i++) {
+            ItemStack item = mc.player.getInventory().getMainStacks().get(i);
 
-            if (item.has(DataComponents.GLIDER)) {
+            if (item.contains(DataComponentTypes.GLIDER)) {
                 equip(i);
                 break;
             }
@@ -131,7 +131,7 @@ public class ChestSwap extends Module {
         InvUtils.move().from(slot).toArmor(2);
         if (closeInventory.get()) {
             // Notchian clients send a Close Window packet with Window ID 0 to close their inventory even though there is never an Open Screen packet for the inventory.
-            mc.getConnection().send(new ServerboundContainerClosePacket(0));
+            mc.getNetworkHandler().sendPacket(new CloseHandledScreenC2SPacket(0));
         }
     }
 

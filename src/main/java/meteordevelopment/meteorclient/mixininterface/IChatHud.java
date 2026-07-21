@@ -5,8 +5,8 @@
 
 package meteordevelopment.meteorclient.mixininterface;
 
-import net.minecraft.network.chat.Component;
+import net.minecraft.text.Text;
 
 public interface IChatHud {
-    void meteor$add(Component message, int id);
+    void meteor$add(Text message, int id);
 }

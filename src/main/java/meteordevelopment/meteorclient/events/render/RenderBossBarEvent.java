@@ -5,8 +5,8 @@
 
 package meteordevelopment.meteorclient.events.render;
 
-import net.minecraft.client.gui.components.LerpingBossEvent;
-import net.minecraft.network.chat.Component;
+import net.minecraft.client.gui.hud.ClientBossBar;
+import net.minecraft.text.Text;
 
 import java.util.Iterator;
 
@@ -14,10 +14,10 @@ public class RenderBossBarEvent {
     public static class BossText {
         private static final BossText INSTANCE = new BossText();
 
-        public LerpingBossEvent bossBar;
-        public Component name;
+        public ClientBossBar bossBar;
+        public Text name;
 
-        public static BossText get(LerpingBossEvent bossBar, Component name) {
+        public static BossText get(ClientBossBar bossBar, Text name) {
             INSTANCE.bossBar = bossBar;
             INSTANCE.name = name;
             return INSTANCE;
@@ -38,9 +38,9 @@ public class RenderBossBarEvent {
     public static class BossIterator {
         private static final BossIterator INSTANCE = new BossIterator();
 
-        public Iterator<LerpingBossEvent> iterator;
+        public Iterator<ClientBossBar> iterator;
 
-        public static BossIterator get(Iterator<LerpingBossEvent> iterator) {
+        public static BossIterator get(Iterator<ClientBossBar> iterator) {
             INSTANCE.iterator = iterator;
             return INSTANCE;
         }

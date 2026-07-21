@@ -32,7 +32,6 @@ public class Pitch40 extends ElytraFlightMode {
 
     /**
      * Create a random pitch around `pitch` that is within +/- bound/2
-     *
      * @param pitch the input pitch
      * @param bound the amount of variance
      * @return the changed pitch
@@ -52,7 +51,8 @@ public class Pitch40 extends ElytraFlightMode {
 
         if (pitchingDown && mc.player.getY() <= elytraFly.pitch40lowerBounds.get()) {
             pitchingDown = false;
-        } else if (!pitchingDown && mc.player.getY() >= elytraFly.pitch40upperBounds.get()) {
+        }
+        else if (!pitchingDown && mc.player.getY() >= elytraFly.pitch40upperBounds.get()) {
             pitchingDown = true;
         }
 
@@ -64,17 +64,16 @@ public class Pitch40 extends ElytraFlightMode {
                 pitch = -54.77F;
                 pitchingDown = true;
             }
-            // Pitch downwards
+        // Pitch downwards
         } else if (pitch < 37.72F) {
             pitch += randPitch(elytraFly.pitch40rotationSpeedDown.get().floatValue(), 0.50F);
         }
 
-        mc.player.setXRot(pitch);
+        mc.player.setPitch(pitch);
     }
 
     @Override
-    public void autoTakeoff() {
-    }
+    public void autoTakeoff() {}
 
     @Override
     public void handleHorizontalSpeed(PlayerMoveEvent event) {
@@ -83,14 +82,11 @@ public class Pitch40 extends ElytraFlightMode {
     }
 
     @Override
-    public void handleVerticalSpeed(PlayerMoveEvent event) {
-    }
+    public void handleVerticalSpeed(PlayerMoveEvent event) {}
 
     @Override
-    public void handleFallMultiplier() {
-    }
+    public void handleFallMultiplier() {}
 
     @Override
-    public void handleAutopilot() {
-    }
+    public void handleAutopilot() {}
 }

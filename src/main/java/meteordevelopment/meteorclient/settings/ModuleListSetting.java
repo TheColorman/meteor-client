@@ -7,10 +7,10 @@ package meteordevelopment.meteorclient.settings;
 
 import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.meteorclient.systems.modules.Modules;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtList;
+import net.minecraft.nbt.NbtString;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,8 +38,7 @@ public class ModuleListSetting extends Setting<List<Module>> {
                 Module module = Modules.get().get(value.trim());
                 if (module != null) modules.add(module);
             }
-        } catch (Exception _) {
-        }
+        } catch (Exception ignored) {}
 
         return modules;
     }
@@ -60,20 +59,20 @@ public class ModuleListSetting extends Setting<List<Module>> {
     }
 
     @Override
-    public CompoundTag save(CompoundTag tag) {
-        ListTag modulesTag = new ListTag();
-        for (Module module : get()) modulesTag.add(StringTag.valueOf(module.name));
+    public NbtCompound save(NbtCompound tag) {
+        NbtList modulesTag = new NbtList();
+        for (Module module : get()) modulesTag.add(NbtString.of(module.name));
         tag.put("modules", modulesTag);
 
         return tag;
     }
 
     @Override
-    public List<Module> load(CompoundTag tag) {
+    public List<Module> load(NbtCompound tag) {
         get().clear();
 
-        ListTag valueTag = tag.getListOrEmpty("modules");
-        for (Tag tagI : valueTag) {
+        NbtList valueTag = tag.getListOrEmpty("modules");
+        for (NbtElement tagI : valueTag) {
             Module module = Modules.get().get(tagI.asString().orElse(""));
             if (module != null) get().add(module);
         }

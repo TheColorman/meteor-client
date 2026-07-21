@@ -5,7 +5,7 @@
 
 package meteordevelopment.meteorclient.utils.player;
 
-import meteordevelopment.meteorclient.mixininterface.IVec3;
+import meteordevelopment.meteorclient.mixininterface.IVec3d;
 import meteordevelopment.meteorclient.pathing.PathManagers;
 import meteordevelopment.meteorclient.systems.config.Config;
 import meteordevelopment.meteorclient.systems.friends.Friends;
@@ -17,38 +17,38 @@ import meteordevelopment.meteorclient.utils.entity.EntityUtils;
 import meteordevelopment.meteorclient.utils.misc.text.TextUtils;
 import meteordevelopment.meteorclient.utils.render.color.Color;
 import meteordevelopment.meteorclient.utils.world.Dimension;
-import net.minecraft.client.multiplayer.PlayerInfo;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
-import net.minecraft.util.Mth;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.entity.BedBlockEntity;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.client.network.PlayerListEntry;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.decoration.EndCrystalEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.PotionItem;
+import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
+import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.GameMode;
+import net.minecraft.world.RaycastContext;
 import net.minecraft.world.attribute.EnvironmentAttributes;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.boss.enderdragon.EndCrystal;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.PotionItem;
-import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.level.GameType;
-import net.minecraft.world.level.block.entity.BedBlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec3;
 
 import static meteordevelopment.meteorclient.MeteorClient.mc;
 import static meteordevelopment.meteorclient.utils.Utils.WHITE;
 
 public class PlayerUtils {
     private static final double diagonal = 1 / Math.sqrt(2);
-    private static final Vec3 horizontalVelocity = new Vec3(0, 0, 0);
+    private static final Vec3d horizontalVelocity = new Vec3d(0, 0, 0);
 
     private static final Color color = new Color();
 
     private PlayerUtils() {
     }
 
-    public static Color getPlayerColor(Player entity, Color defaultColor) {
+    public static Color getPlayerColor(PlayerEntity entity, Color defaultColor) {
         if (Friends.get().isFriend(entity)) {
             return color.set(Config.get().friendColor.get()).a(defaultColor.a);
         }
@@ -60,37 +60,37 @@ public class PlayerUtils {
         return defaultColor;
     }
 
-    public static Vec3 getHorizontalVelocity(double bps) {
-        float yaw = mc.player.getYRot();
+    public static Vec3d getHorizontalVelocity(double bps) {
+        float yaw = mc.player.getYaw();
 
         if (PathManagers.get().isPathing()) {
             yaw = PathManagers.get().getTargetYaw();
         }
 
-        Vec3 forward = Vec3.directionFromRotation(0, yaw);
-        Vec3 right = Vec3.directionFromRotation(0, yaw + 90);
+        Vec3d forward = Vec3d.fromPolar(0, yaw);
+        Vec3d right = Vec3d.fromPolar(0, yaw + 90);
         double velX = 0;
         double velZ = 0;
 
         boolean a = false;
-        if (mc.player.input.keyPresses.forward()) {
+        if (mc.player.input.playerInput.forward()) {
             velX += forward.x / 20 * bps;
             velZ += forward.z / 20 * bps;
             a = true;
         }
-        if (mc.player.input.keyPresses.backward()) {
+        if (mc.player.input.playerInput.backward()) {
             velX -= forward.x / 20 * bps;
             velZ -= forward.z / 20 * bps;
             a = true;
         }
 
         boolean b = false;
-        if (mc.player.input.keyPresses.right()) {
+        if (mc.player.input.playerInput.right()) {
             velX += right.x / 20 * bps;
             velZ += right.z / 20 * bps;
             b = true;
         }
-        if (mc.player.input.keyPresses.left()) {
+        if (mc.player.input.playerInput.left()) {
             velX -= right.x / 20 * bps;
             velZ -= right.z / 20 * bps;
             b = true;
@@ -101,34 +101,34 @@ public class PlayerUtils {
             velZ *= diagonal;
         }
 
-        ((IVec3) horizontalVelocity).meteor$setXZ(velX, velZ);
+        ((IVec3d) horizontalVelocity).meteor$setXZ(velX, velZ);
         return horizontalVelocity;
     }
 
     public static void centerPlayer() {
-        double x = Mth.floor(mc.player.getX()) + 0.5;
-        double z = Mth.floor(mc.player.getZ()) + 0.5;
-        mc.player.setPos(x, mc.player.getY(), z);
-        mc.player.connection.send(new ServerboundMovePlayerPacket.Pos(mc.player.getX(), mc.player.getY(), mc.player.getZ(), mc.player.onGround(), mc.player.horizontalCollision));
+        double x = MathHelper.floor(mc.player.getX()) + 0.5;
+        double z = MathHelper.floor(mc.player.getZ()) + 0.5;
+        mc.player.setPosition(x, mc.player.getY(), z);
+        mc.player.networkHandler.sendPacket(new PlayerMoveC2SPacket.PositionAndOnGround(mc.player.getX(), mc.player.getY(), mc.player.getZ(), mc.player.isOnGround(), mc.player.horizontalCollision));
     }
 
     @SuppressWarnings("DataFlowIssue")
     public static boolean canSeeEntity(Entity entity) {
-        Vec3 vec1 = new Vec3(0, 0, 0);
-        Vec3 vec2 = new Vec3(0, 0, 0);
+        Vec3d vec1 = new Vec3d(0, 0, 0);
+        Vec3d vec2 = new Vec3d(0, 0, 0);
 
-        ((IVec3) vec1).meteor$set(mc.player.getX(), mc.player.getY() + mc.player.getEyeHeight(), mc.player.getZ());
-        ((IVec3) vec2).meteor$set(entity.getX(), entity.getY(), entity.getZ());
-        boolean canSeeFeet = mc.level.clip(new ClipContext(vec1, vec2, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, mc.player)).getType() == HitResult.Type.MISS;
+        ((IVec3d) vec1).meteor$set(mc.player.getX(), mc.player.getY() + mc.player.getStandingEyeHeight(), mc.player.getZ());
+        ((IVec3d) vec2).meteor$set(entity.getX(), entity.getY(), entity.getZ());
+        boolean canSeeFeet = mc.world.raycast(new RaycastContext(vec1, vec2, RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.NONE, mc.player)).getType() == HitResult.Type.MISS;
 
-        ((IVec3) vec2).meteor$set(entity.getX(), entity.getY() + entity.getEyeHeight(), entity.getZ());
-        boolean canSeeEyes = mc.level.clip(new ClipContext(vec1, vec2, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, mc.player)).getType() == HitResult.Type.MISS;
+        ((IVec3d) vec2).meteor$set(entity.getX(), entity.getY() + entity.getStandingEyeHeight(), entity.getZ());
+        boolean canSeeEyes = mc.world.raycast(new RaycastContext(vec1, vec2, RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.NONE, mc.player)).getType() == HitResult.Type.MISS;
 
         return canSeeFeet || canSeeEyes;
     }
 
-    public static float[] calculateAngle(Vec3 target) {
-        Vec3 eyesPos = new Vec3(mc.player.getX(), mc.player.getY() + mc.player.getEyeHeight(mc.player.getPose()), mc.player.getZ());
+    public static float[] calculateAngle(Vec3d target) {
+        Vec3d eyesPos = new Vec3d(mc.player.getX(), mc.player.getY() + mc.player.getEyeHeight(mc.player.getPose()), mc.player.getZ());
 
         double dX = target.x - eyesPos.x;
         double dY = (target.y - eyesPos.y) * -1.0D;
@@ -136,36 +136,35 @@ public class PlayerUtils {
 
         double dist = Math.sqrt(dX * dX + dZ * dZ);
 
-        return new float[]{(float) Mth.wrapDegrees(Math.toDegrees(Math.atan2(dZ, dX)) - 90.0D), (float) Mth.wrapDegrees(Math.toDegrees(Math.atan2(dY, dist)))};
+        return new float[]{(float) MathHelper.wrapDegrees(Math.toDegrees(Math.atan2(dZ, dX)) - 90.0D), (float) MathHelper.wrapDegrees(Math.toDegrees(Math.atan2(dY, dist)))};
     }
 
     public static boolean shouldPause(boolean ifBreaking, boolean ifEating, boolean ifDrinking) {
-        if (ifBreaking && mc.gameMode.isDestroying()) return true;
-        if (ifEating && (mc.player.isUsingItem() && (mc.player.getMainHandItem().getItem().components().has(DataComponents.FOOD) || mc.player.getOffhandItem().getItem().components().has(DataComponents.FOOD))))
-            return true;
-        return ifDrinking && (mc.player.isUsingItem() && (mc.player.getMainHandItem().getItem() instanceof PotionItem || mc.player.getOffhandItem().getItem() instanceof PotionItem));
+        if (ifBreaking && mc.interactionManager.isBreakingBlock()) return true;
+        if (ifEating && (mc.player.isUsingItem() && (mc.player.getMainHandStack().getItem().getComponents().contains(DataComponentTypes.FOOD) || mc.player.getOffHandStack().getItem().getComponents().contains(DataComponentTypes.FOOD)))) return true;
+        return ifDrinking && (mc.player.isUsingItem() && (mc.player.getMainHandStack().getItem() instanceof PotionItem || mc.player.getOffHandStack().getItem() instanceof PotionItem));
     }
 
     public static boolean isMoving() {
-        return mc.player.zza != 0 || mc.player.xxa != 0;
+        return mc.player.forwardSpeed != 0 || mc.player.sidewaysSpeed != 0;
     }
 
     public static boolean isSprinting() {
-        return mc.player.isSprinting() && (mc.player.zza != 0 || mc.player.xxa != 0);
+        return mc.player.isSprinting() && (mc.player.forwardSpeed != 0 || mc.player.sidewaysSpeed != 0);
     }
 
     public static boolean isInHole(boolean doubles) {
         if (!Utils.canUpdate()) return false;
 
-        BlockPos blockPos = mc.player.blockPosition();
+        BlockPos blockPos = mc.player.getBlockPos();
         int air = 0;
 
         for (Direction direction : Direction.values()) {
             if (direction == Direction.UP) continue;
 
-            BlockState state = mc.level.getBlockState(blockPos.relative(direction));
+            BlockState state = mc.world.getBlockState(blockPos.offset(direction));
 
-            if (state.getBlock().getExplosionResistance() < 600) {
+            if (state.getBlock().getBlastResistance() < 600) {
                 if (!doubles || direction == Direction.DOWN) return false;
 
                 air++;
@@ -173,9 +172,9 @@ public class PlayerUtils {
                 for (Direction dir : Direction.values()) {
                     if (dir == direction.getOpposite() || dir == Direction.UP) continue;
 
-                    BlockState blockState1 = mc.level.getBlockState(blockPos.relative(direction).relative(dir));
+                    BlockState blockState1 = mc.world.getBlockState(blockPos.offset(direction).offset(dir));
 
-                    if (blockState1.getBlock().getExplosionResistance() < 600) {
+                    if (blockState1.getBlock().getBlastResistance() < 600) {
                         return false;
                     }
                 }
@@ -193,24 +192,24 @@ public class PlayerUtils {
         float damageTaken = 0;
 
         if (entities) {
-            for (Entity entity : mc.level.entitiesForRendering()) {
+            for (Entity entity : mc.world.getEntities()) {
                 // Check for end crystals
-                if (entity instanceof EndCrystal) {
-                    float crystalDamage = DamageUtils.crystalDamage(mc.player, entity.position());
+                if (entity instanceof EndCrystalEntity) {
+                    float crystalDamage = DamageUtils.crystalDamage(mc.player, entity.getEntityPos());
                     if (crystalDamage > damageTaken) damageTaken = crystalDamage;
                 }
                 // Check for players holding swords
-                else if (entity instanceof Player player && !Friends.get().isFriend(player) && isWithin(entity, 5)) {
+                else if (entity instanceof PlayerEntity player && !Friends.get().isFriend(player) && isWithin(entity, 5)) {
                     float attackDamage = DamageUtils.getAttackDamage(player, mc.player);
                     if (attackDamage > damageTaken) damageTaken = attackDamage;
                 }
             }
 
             // Check for beds if in nether
-            if (mc.level.environmentAttributes().getDimensionValue(EnvironmentAttributes.BED_RULE).explodes()) {
+            if (mc.world.getEnvironmentAttributes().getAttributeValue(EnvironmentAttributes.BED_RULE_GAMEPLAY).explodes()) {
                 for (BlockEntity blockEntity : Utils.blockEntities()) {
-                    BlockPos bp = blockEntity.getBlockPos();
-                    Vec3 pos = new Vec3(bp.getX(), bp.getY(), bp.getZ());
+                    BlockPos bp = blockEntity.getPos();
+                    Vec3d pos = new Vec3d(bp.getX(), bp.getY(), bp.getZ());
 
                     if (blockEntity instanceof BedBlockEntity) {
                         float explosionDamage = DamageUtils.bedDamage(mc.player, pos);
@@ -246,8 +245,8 @@ public class PlayerUtils {
         return distanceTo(blockPos.getX(), blockPos.getY(), blockPos.getZ());
     }
 
-    public static double distanceTo(Vec3 vec3d) {
-        return distanceTo(vec3d.x(), vec3d.y(), vec3d.z());
+    public static double distanceTo(Vec3d vec3d) {
+        return distanceTo(vec3d.getX(), vec3d.getY(), vec3d.getZ());
     }
 
     public static double distanceTo(double x, double y, double z) {
@@ -277,8 +276,8 @@ public class PlayerUtils {
         return squaredDistanceTo(entity.getX(), entity.getY(), entity.getZ()) <= r * r;
     }
 
-    public static boolean isWithin(Vec3 vec3d, double r) {
-        return squaredDistanceTo(vec3d.x(), vec3d.y(), vec3d.z()) <= r * r;
+    public static boolean isWithin(Vec3d vec3d, double r) {
+        return squaredDistanceTo(vec3d.getX(), vec3d.getY(), vec3d.getZ()) <= r * r;
     }
 
     public static boolean isWithin(BlockPos blockPos, double r) {
@@ -298,7 +297,7 @@ public class PlayerUtils {
     }
 
     public static double squaredDistanceToCamera(double x, double y, double z) {
-        Vec3 cameraPos = mc.gameRenderer.getMainCamera().position();
+        Vec3d cameraPos = mc.gameRenderer.getCamera().getCameraPos();
         return squaredDistance(cameraPos.x, cameraPos.y, cameraPos.z, x, y, z);
     }
 
@@ -310,8 +309,8 @@ public class PlayerUtils {
         return squaredDistanceToCamera(entity.getX(), entity.getY(), entity.getZ()) <= r * r;
     }
 
-    public static boolean isWithinCamera(Vec3 vec3d, double r) {
-        return squaredDistanceToCamera(vec3d.x(), vec3d.y(), vec3d.z()) <= r * r;
+    public static boolean isWithinCamera(Vec3d vec3d, double r) {
+        return squaredDistanceToCamera(vec3d.getX(), vec3d.getY(), vec3d.getZ()) <= r * r;
     }
 
     public static boolean isWithinCamera(BlockPos blockPos, double r) {
@@ -326,8 +325,8 @@ public class PlayerUtils {
         return isWithinReach(entity.getX(), entity.getY(), entity.getZ());
     }
 
-    public static boolean isWithinReach(Vec3 vec3d) {
-        return isWithinReach(vec3d.x(), vec3d.y(), vec3d.z());
+    public static boolean isWithinReach(Vec3d vec3d) {
+        return isWithinReach(vec3d.getX(), vec3d.getY(), vec3d.getZ());
     }
 
     public static boolean isWithinReach(BlockPos blockPos) {
@@ -335,22 +334,22 @@ public class PlayerUtils {
     }
 
     public static boolean isWithinReach(double x, double y, double z) {
-        return squaredDistance(mc.player.getX(), mc.player.getEyeY(), mc.player.getZ(), x, y, z) <= mc.player.blockInteractionRange() * mc.player.blockInteractionRange();
+        return squaredDistance(mc.player.getX(), mc.player.getEyeY(), mc.player.getZ(), x, y, z) <= mc.player.getBlockInteractionRange() * mc.player.getBlockInteractionRange();
     }
 
     public static Dimension getDimension() {
-        if (mc.level == null) return Dimension.Overworld;
+        if (mc.world == null) return Dimension.Overworld;
 
-        return switch (mc.level.dimension().identifier().getPath()) {
+        return switch (mc.world.getRegistryKey().getValue().getPath()) {
             case "the_nether" -> Dimension.Nether;
             case "the_end" -> Dimension.End;
             default -> Dimension.Overworld;
         };
     }
 
-    public static GameType getGameMode() {
+    public static GameMode getGameMode() {
         if (mc.player == null) return null;
-        PlayerInfo playerListEntry = mc.getConnection().getPlayerInfo(mc.player.getUUID());
+        PlayerListEntry playerListEntry = mc.getNetworkHandler().getPlayerListEntry(mc.player.getUuid());
         if (playerListEntry == null) return null;
         return playerListEntry.getGameMode();
     }
@@ -360,13 +359,13 @@ public class PlayerUtils {
     }
 
     public static boolean isAlive() {
-        return mc.player.isAlive() && !mc.player.isDeadOrDying();
+        return mc.player.isAlive() && !mc.player.isDead();
     }
 
     public static int getPing() {
-        if (mc.getConnection() == null) return 0;
+        if (mc.getNetworkHandler() == null) return 0;
 
-        PlayerInfo playerListEntry = mc.getConnection().getPlayerInfo(mc.player.getUUID());
+        PlayerListEntry playerListEntry = mc.getNetworkHandler().getPlayerListEntry(mc.player.getUuid());
         if (playerListEntry == null) return 0;
         return playerListEntry.getLatency();
     }

@@ -5,7 +5,7 @@
 
 package meteordevelopment.meteorclient.events.entity.player;
 
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.item.ItemStack;
 
 public class PickItemsEvent {
     private static final PickItemsEvent INSTANCE = new PickItemsEvent();

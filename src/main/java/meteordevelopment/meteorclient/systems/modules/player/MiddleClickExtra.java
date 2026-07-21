@@ -20,13 +20,13 @@ import meteordevelopment.meteorclient.utils.player.ChatUtils;
 import meteordevelopment.meteorclient.utils.player.FindItemResult;
 import meteordevelopment.meteorclient.utils.player.InvUtils;
 import meteordevelopment.orbit.EventHandler;
-import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.BowItem;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.level.GameType;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.BowItem;
+import net.minecraft.item.Item;
+import net.minecraft.item.Items;
+import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
+import net.minecraft.util.Hand;
+import net.minecraft.world.GameMode;
 
 import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_MIDDLE;
 
@@ -103,14 +103,13 @@ public class MiddleClickExtra extends Module {
 
     @EventHandler
     private void onMouseClick(MouseClickEvent event) {
-        if (event.action != KeyAction.Press || event.button() != GLFW_MOUSE_BUTTON_MIDDLE || mc.screen != null)
-            return;
+        if (event.action != KeyAction.Press || event.button() != GLFW_MOUSE_BUTTON_MIDDLE || mc.currentScreen != null) return;
 
         if (disabledByCreative()) return;
 
         if (mode.get() == Mode.AddFriend) {
-            if (mc.crosshairPickEntity == null) return;
-            if (!(mc.crosshairPickEntity instanceof Player player)) return;
+            if (mc.targetedEntity == null) return;
+            if (!(mc.targetedEntity instanceof PlayerEntity player)) return;
 
             if (!Friends.get().isFriend(player)) {
                 Friends.get().add(new Friend(player));
@@ -144,10 +143,10 @@ public class MiddleClickExtra extends Module {
         }
 
         if (mode.get().immediate) {
-            mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
+            mc.interactionManager.interactItem(mc.player, Hand.MAIN_HAND);
             swapBack(false);
         } else {
-            mc.options.keyUse.setDown(true);
+            mc.options.useKey.setPressed(true);
             isUsing = true;
         }
     }
@@ -157,16 +156,16 @@ public class MiddleClickExtra extends Module {
         if (!isUsing) return;
         boolean pressed = true;
 
-        if (mc.player.getMainHandItem().getItem() instanceof BowItem) {
-            pressed = BowItem.getPowerForTime(mc.player.getTicksUsingItem()) < 1;
+        if (mc.player.getMainHandStack().getItem() instanceof BowItem) {
+            pressed = BowItem.getPullProgress(mc.player.getItemUseTime()) < 1;
         }
 
-        mc.options.keyUse.setDown(pressed);
+        mc.options.useKey.setPressed(pressed);
     }
 
     @EventHandler
     private void onPacketSendEvent(PacketEvent.Send event) {
-        if (event.packet instanceof ServerboundSetCarriedItemPacket) {
+        if (event.packet instanceof UpdateSelectedSlotC2SPacket) {
             stopIfUsing(true);
         }
     }
@@ -184,7 +183,7 @@ public class MiddleClickExtra extends Module {
     private void stopIfUsing(boolean wasCancelled) {
         if (isUsing) {
             swapBack(wasCancelled);
-            mc.options.keyUse.setDown(false);
+            mc.options.useKey.setPressed(false);
             isUsing = false;
         }
     }
@@ -203,7 +202,7 @@ public class MiddleClickExtra extends Module {
     private boolean disabledByCreative() {
         if (mc.player == null) return false;
 
-        return disableInCreative.get() && mc.player.gameMode() == GameType.CREATIVE;
+        return disableInCreative.get() && mc.player.getGameMode() == GameMode.CREATIVE;
     }
 
     public enum Mode {

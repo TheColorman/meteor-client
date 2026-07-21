@@ -62,13 +62,13 @@ public class NotebotSongsScreen extends WindowScreen {
                 if (SongDecoders.hasDecoder(path)) {
                     String name = path.getFileName().toString();
 
-                    if (Utils.searchTextDefault(name, filterText, false)) {
+                    if (Utils.searchTextDefault(name, filterText, false)){
                         addPath(path);
                         noSongsFound.set(false);
                     }
                 }
             });
-        } catch (IOException _) {
+        } catch (IOException e) {
             table.add(theme.label("Missing meteor-client/notebot folder.")).expandCellX();
             table.row();
         }

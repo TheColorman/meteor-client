@@ -12,8 +12,8 @@ import meteordevelopment.meteorclient.utils.network.FailedHttpResponse;
 import meteordevelopment.meteorclient.utils.network.Http;
 import meteordevelopment.meteorclient.utils.render.PlayerHeadTexture;
 import meteordevelopment.meteorclient.utils.render.PlayerHeadUtils;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.nbt.NbtCompound;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
@@ -35,10 +35,9 @@ public class Friend implements ISerializable<Friend>, Comparable<Friend> {
         this.headTexture = null;
     }
 
-    public Friend(Player player) {
-        this(player.getName().getString(), player.getUUID());
+    public Friend(PlayerEntity player) {
+        this(player.getName().getString(), player.getUuid());
     }
-
     public Friend(String name) {
         this(name, null);
     }
@@ -57,14 +56,14 @@ public class Friend implements ISerializable<Friend>, Comparable<Friend> {
 
         if (id != null) {
             res = Http.get("https://sessionserver.mojang.com/session/minecraft/profile/" + UndashedUuid.toString(id))
-                .exceptionHandler(_ -> MeteorClient.LOG.error("Error while trying to connect session server for friend '{}'", name))
+                .exceptionHandler(e -> MeteorClient.LOG.error("Error while trying to connect session server for friend '{}'", name))
                 .sendJsonResponse(APIResponse.class);
         }
 
         // Fallback to name-based lookup
         if (res == null || res.statusCode() != 200) {
             res = Http.get("https://api.mojang.com/users/profiles/minecraft/" + name)
-                .exceptionHandler(_ -> MeteorClient.LOG.error("Error while trying to update info for friend '{}'", name))
+                .exceptionHandler(e -> MeteorClient.LOG.error("Error while trying to update info for friend '{}'", name))
                 .sendJsonResponse(APIResponse.class);
         }
 
@@ -91,8 +90,8 @@ public class Friend implements ISerializable<Friend>, Comparable<Friend> {
     }
 
     @Override
-    public CompoundTag toTag() {
-        CompoundTag tag = new CompoundTag();
+    public NbtCompound toTag() {
+        NbtCompound tag = new NbtCompound();
 
         tag.putString("name", name);
         if (id != null) tag.putString("id", UndashedUuid.toString(id));
@@ -101,7 +100,7 @@ public class Friend implements ISerializable<Friend>, Comparable<Friend> {
     }
 
     @Override
-    public Friend fromTag(CompoundTag tag) {
+    public Friend fromTag(NbtCompound tag) {
         return this;
     }
 

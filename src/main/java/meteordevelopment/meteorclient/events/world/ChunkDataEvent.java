@@ -5,11 +5,10 @@
 
 package meteordevelopment.meteorclient.events.world;
 
-import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.chunk.WorldChunk;
 
 /**
- * @author Crosby
  * @implNote Shouldn't be put in a {@link meteordevelopment.meteorclient.utils.misc.Pool} to avoid a race-condition, or in a {@link ThreadLocal} as it is shared between threads.
+ * @author Crosby
  */
-public record ChunkDataEvent(LevelChunk chunk) {
-}
+public record ChunkDataEvent(WorldChunk chunk) {}

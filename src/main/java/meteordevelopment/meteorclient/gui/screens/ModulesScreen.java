@@ -5,7 +5,6 @@
 
 package meteordevelopment.meteorclient.gui.screens;
 
-import com.mojang.blaze3d.platform.MacosUtil;
 import meteordevelopment.meteorclient.gui.GuiTheme;
 import meteordevelopment.meteorclient.gui.tabs.TabScreen;
 import meteordevelopment.meteorclient.gui.tabs.Tabs;
@@ -21,9 +20,10 @@ import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.meteorclient.systems.modules.Modules;
 import meteordevelopment.meteorclient.utils.misc.NbtUtils;
 import meteordevelopment.meteorclient.utils.render.DisplayItemUtils;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.util.Tuple;
-import net.minecraft.world.item.Items;
+import net.minecraft.client.input.KeyInput;
+import net.minecraft.client.util.MacWindowUtil;
+import net.minecraft.item.Items;
+import net.minecraft.util.Pair;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,7 +67,7 @@ public class ModulesScreen extends TabScreen {
         w.spacing = 0;
 
         if (theme.categoryIcons()) {
-            w.beforeHeaderInit = wContainer -> wContainer.add(theme.item(category.icon.get())).pad(2);
+            w.beforeHeaderInit = wContainer -> wContainer.add(theme.item(category.icon)).pad(2);
         }
 
         c.add(w);
@@ -87,16 +87,16 @@ public class ModulesScreen extends TabScreen {
     protected void createSearchW(WContainer w, String text) {
         if (!text.isEmpty()) {
             // Titles
-            List<Tuple<Module, String>> modules = Modules.get().searchTitles(text);
+            List<Pair<Module, String>> modules = Modules.get().searchTitles(text);
 
             if (!modules.isEmpty()) {
                 WSection section = w.add(theme.section("Modules")).expandX().widget();
                 section.spacing = 0;
 
                 int count = 0;
-                for (Tuple<Module, String> p : modules) {
+                for (Pair<Module, String> p : modules) {
                     if (count >= Config.get().moduleSearchCount.get() || count >= modules.size()) break;
-                    section.add(theme.module(p.getA(), p.getB())).expandX();
+                    section.add(theme.module(p.getLeft(), p.getRight())).expandX();
                     count++;
                 }
             }
@@ -149,10 +149,10 @@ public class ModulesScreen extends TabScreen {
     }
 
     @Override
-    public boolean keyPressed(KeyEvent value) {
+    public boolean keyPressed(KeyInput value) {
         if (locked) return false;
 
-        boolean cntrl = MacosUtil.IS_MACOS ? value.modifiers() == GLFW_MOD_SUPER : value.modifiers() == GLFW_MOD_CONTROL;
+        boolean cntrl = MacWindowUtil.IS_MAC ? value.modifiers() == GLFW_MOD_SUPER : value.modifiers() == GLFW_MOD_CONTROL;
 
         if (cntrl && value.key() == GLFW_KEY_F) {
             if (searchWindow != null) searchWindow.setExpanded(true);

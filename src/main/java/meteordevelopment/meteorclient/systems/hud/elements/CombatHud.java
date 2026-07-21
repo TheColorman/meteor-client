@@ -26,19 +26,19 @@ import meteordevelopment.meteorclient.utils.player.PlayerUtils;
 import meteordevelopment.meteorclient.utils.render.DisplayItemUtils;
 import meteordevelopment.meteorclient.utils.render.color.Color;
 import meteordevelopment.meteorclient.utils.render.color.SettingColor;
-import net.minecraft.core.Holder;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.tags.EnchantmentTags;
-import net.minecraft.tags.ItemTags;
-import net.minecraft.util.Mth;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.BedItem;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.enchantment.Enchantment;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
-import net.minecraft.world.item.enchantment.ItemEnchantments;
+import net.minecraft.component.type.ItemEnchantmentsComponent;
+import net.minecraft.enchantment.Enchantment;
+import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.BedItem;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.registry.tag.EnchantmentTags;
+import net.minecraft.registry.tag.ItemTags;
+import net.minecraft.util.math.MathHelper;
 import org.joml.Matrix4fStack;
 
 import java.util.ArrayList;
@@ -97,7 +97,7 @@ public class CombatHud extends HudElement {
 
     // Enchantments
 
-    private final Setting<Set<ResourceKey<Enchantment>>> displayedEnchantments = sgEnchantments.add(new EnchantmentListSetting.Builder()
+    private final Setting<Set<RegistryKey<Enchantment>>> displayedEnchantments = sgEnchantments.add(new EnchantmentListSetting.Builder()
         .name("displayed-enchantments")
         .description("The enchantments that are shown on nametags.")
         .vanillaDefaults()
@@ -183,7 +183,7 @@ public class CombatHud extends HudElement {
         .name("custom-scale")
         .description("Applies a custom scale to this hud element.")
         .defaultValue(false)
-        .onChanged(_ -> calculateSize())
+        .onChanged(aBoolean -> calculateSize())
         .build()
     );
 
@@ -192,7 +192,7 @@ public class CombatHud extends HudElement {
         .description("Custom scale.")
         .visible(customScale::get)
         .defaultValue(2)
-        .onChanged(_ -> calculateSize())
+        .onChanged(aDouble -> calculateSize())
         .min(0.5)
         .sliderRange(0.5, 3)
         .build()
@@ -215,7 +215,7 @@ public class CombatHud extends HudElement {
         .build()
     );
 
-    private Player playerEntity;
+    private PlayerEntity playerEntity;
 
     public CombatHud() {
         super(INFO);
@@ -264,8 +264,8 @@ public class CombatHud extends HudElement {
                 (int) (y + 10 * getScale()),
                 (int) (50 * getScale()),
                 (int) (60 * getScale()),
-                -Mth.wrapDegrees(playerEntity.yRotO + (playerEntity.getYRot() - playerEntity.yRotO) * mc.getDeltaTracker().getGameTimeDeltaPartialTick(true)),
-                -playerEntity.getXRot()
+                -MathHelper.wrapDegrees(playerEntity.lastYaw + (playerEntity.getYaw() - playerEntity.lastYaw) * mc.getRenderTickCounter().getTickProgress(true)),
+                -playerEntity.getPitch()
             );
 
             // Moving pos to past player model
@@ -324,7 +324,7 @@ public class CombatHud extends HudElement {
                     for (int position = 5; position >= 0; position--) {
                         ItemStack itemStack = getItem(position);
 
-                        if (itemStack.is(ItemTags.SWORDS)
+                        if (itemStack.isIn(ItemTags.SWORDS)
                             || itemStack.getItem() == Items.END_CRYSTAL
                             || itemStack.getItem() == Items.RESPAWN_ANCHOR
                             || itemStack.getItem() instanceof BedItem) threat = true;
@@ -389,20 +389,20 @@ public class CombatHud extends HudElement {
 
                 armorY = (y / getScale()) + 18;
 
-                ItemEnchantments enchantments = EnchantmentHelper.getEnchantmentsForCrafting(itemStack);
-                List<ObjectIntPair<Holder<Enchantment>>> enchantmentsToShow = new ArrayList<>();
+                ItemEnchantmentsComponent enchantments = EnchantmentHelper.getEnchantments(itemStack);
+                List<ObjectIntPair<RegistryEntry<Enchantment>>> enchantmentsToShow = new ArrayList<>();
 
-                for (Object2IntMap.Entry<Holder<Enchantment>> entry : enchantments.entrySet()) {
-                    if (entry.getKey().is(displayedEnchantments.get()::contains)) {
+                for (Object2IntMap.Entry<RegistryEntry<Enchantment>> entry : enchantments.getEnchantmentEntries()) {
+                    if (entry.getKey().matches(displayedEnchantments.get()::contains)) {
                         enchantmentsToShow.add(new ObjectIntImmutablePair<>(entry.getKey(), entry.getIntValue()));
                     }
                 }
 
-                for (ObjectIntPair<Holder<Enchantment>> entry : enchantmentsToShow) {
+                for (ObjectIntPair<RegistryEntry<Enchantment>> entry : enchantmentsToShow) {
                     String enchantName = Utils.getEnchantSimpleName(entry.left(), 3) + " " + entry.rightInt();
 
                     double enchX = (((x / getScale()) + position * 20) + 8) - (TextRenderer.get().getWidth(enchantName) / 2);
-                    TextRenderer.get().render(enchantName, enchX, armorY, entry.left().is(EnchantmentTags.CURSE) ? RED : enchantmentTextColor.get());
+                    TextRenderer.get().render(enchantName, enchX, armorY, entry.left().isIn(EnchantmentTags.CURSE) ? RED : enchantmentTextColor.get());
                     armorY += TextRenderer.get().getHeight();
                 }
                 slot--;
@@ -469,12 +469,12 @@ public class CombatHud extends HudElement {
         if (playerEntity == null) return ItemStack.EMPTY;
 
         return switch (i) {
-            case 5 -> playerEntity.getMainHandItem();
-            case 4 -> playerEntity.getOffhandItem();
-            case 3 -> playerEntity.getItemBySlot(EquipmentSlot.HEAD);
-            case 2 -> playerEntity.getItemBySlot(EquipmentSlot.CHEST);
-            case 1 -> playerEntity.getItemBySlot(EquipmentSlot.LEGS);
-            case 0 -> playerEntity.getItemBySlot(EquipmentSlot.FEET);
+            case 5 -> playerEntity.getMainHandStack();
+            case 4 -> playerEntity.getOffHandStack();
+            case 3 -> playerEntity.getEquippedStack(EquipmentSlot.HEAD);
+            case 2 -> playerEntity.getEquippedStack(EquipmentSlot.CHEST);
+            case 1 -> playerEntity.getEquippedStack(EquipmentSlot.LEGS);
+            case 0 -> playerEntity.getEquippedStack(EquipmentSlot.FEET);
             default -> ItemStack.EMPTY;
         };
     }

@@ -8,22 +8,20 @@ package meteordevelopment.meteorclient.utils.render.prompts;
 import meteordevelopment.meteorclient.gui.GuiTheme;
 import meteordevelopment.meteorclient.gui.GuiThemes;
 import meteordevelopment.meteorclient.gui.widgets.pressable.WButton;
-import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screen.Screen;
 
 import static meteordevelopment.meteorclient.MeteorClient.mc;
 
 public class YesNoPrompt extends Prompt<YesNoPrompt> {
-    private Runnable onYes = () -> {
-    };
-    private Runnable onNo = () -> {
-    };
+    private Runnable onYes = () -> {};
+    private Runnable onNo = () -> {};
 
     private YesNoPrompt(GuiTheme theme, Screen parent) {
         super(theme, parent);
     }
 
     public static YesNoPrompt create() {
-        return new YesNoPrompt(GuiThemes.get(), mc.screen);
+        return new YesNoPrompt(GuiThemes.get(), mc.currentScreen);
     }
 
     public static YesNoPrompt create(GuiTheme theme, Screen parent) {
@@ -46,14 +44,14 @@ public class YesNoPrompt extends Prompt<YesNoPrompt> {
         yesButton.action = () -> {
             dontShowAgain(screen);
             onYes.run();
-            screen.onClose();
+            screen.close();
         };
 
         WButton noButton = screen.list.add(theme.button("No")).expandX().widget();
         noButton.action = () -> {
             dontShowAgain(screen);
             onNo.run();
-            screen.onClose();
+            screen.close();
         };
     }
 }

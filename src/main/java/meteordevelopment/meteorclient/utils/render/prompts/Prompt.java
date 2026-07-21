@@ -6,7 +6,7 @@ import meteordevelopment.meteorclient.gui.WindowScreen;
 import meteordevelopment.meteorclient.gui.widgets.containers.WHorizontalList;
 import meteordevelopment.meteorclient.gui.widgets.pressable.WCheckbox;
 import meteordevelopment.meteorclient.systems.config.Config;
-import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screen.Screen;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,7 +58,8 @@ public abstract class Prompt<T> {
 
         if (!RenderSystem.isOnRenderThread()) {
             mc.execute(() -> mc.setScreen(new PromptScreen(theme)));
-        } else {
+        }
+        else {
             mc.setScreen(new PromptScreen(theme));
         }
 

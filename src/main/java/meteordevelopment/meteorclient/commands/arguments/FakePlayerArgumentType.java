@@ -18,7 +18,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import static net.minecraft.commands.SharedSuggestionProvider.suggest;
+import static net.minecraft.command.CommandSource.suggestMatching;
 
 public class FakePlayerArgumentType implements ArgumentType<String> {
     private static final FakePlayerArgumentType INSTANCE = new FakePlayerArgumentType();
@@ -32,8 +32,7 @@ public class FakePlayerArgumentType implements ArgumentType<String> {
         return FakePlayerManager.get(context.getArgument("fp", String.class));
     }
 
-    private FakePlayerArgumentType() {
-    }
+    private FakePlayerArgumentType() {}
 
     @Override
     public String parse(StringReader reader) throws CommandSyntaxException {
@@ -42,7 +41,7 @@ public class FakePlayerArgumentType implements ArgumentType<String> {
 
     @Override
     public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
-        return suggest(FakePlayerManager.stream().map(fakePlayerEntity -> fakePlayerEntity.getName().getString()), builder);
+        return suggestMatching(FakePlayerManager.stream().map(fakePlayerEntity -> fakePlayerEntity.getName().getString()), builder);
     }
 
     @Override
