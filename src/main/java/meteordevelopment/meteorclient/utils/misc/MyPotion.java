@@ -7,7 +7,7 @@ package meteordevelopment.meteorclient.utils.misc;
 
 import meteordevelopment.meteorclient.utils.render.DisplayItemUtils;
 import net.minecraft.component.type.PotionContentsComponent;
-import net.minecraft.core.component.DataComponents;
+import net.minecraft.component.DataComponentTypes;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;

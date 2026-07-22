@@ -11,9 +11,9 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtString;
+import net.minecraft.network.NetworkSide;
 import net.minecraft.network.packet.Packet;
-import net.minecraft.network.protocol.PacketFlow;
-import net.minecraft.network.protocol.PacketType;
+import net.minecraft.network.packet.PacketType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -101,11 +101,11 @@ public class PacketListSetting extends Setting<Set<PacketType<? extends @NotNull
         }
 
         public Builder clientbound() {
-            return filter(type -> type.flow() == PacketFlow.CLIENTBOUND);
+            return filter(type -> type.side() == NetworkSide.CLIENTBOUND);
         }
 
         public Builder serverbound() {
-            return filter(type -> type.flow() == PacketFlow.SERVERBOUND);
+            return filter(type -> type.side() == NetworkSide.SERVERBOUND);
         }
 
         @Override

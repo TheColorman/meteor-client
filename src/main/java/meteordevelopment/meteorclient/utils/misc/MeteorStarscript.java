@@ -521,8 +521,8 @@ public class MeteorStarscript {
     }
 
     private static Value weather() {
-        if (mc.level == null) return Value.string("");
-        return Value.string(mc.level.isThundering() ? "Thunder" : mc.level.isRaining() ? "Rain" : "Clear");
+        if (mc.world == null) return Value.string("");
+        return Value.string(mc.world.isThundering() ? "Thunder" : mc.world.isRaining() ? "Rain" : "Clear");
     }
 
     private static Value handOrOffhand() {

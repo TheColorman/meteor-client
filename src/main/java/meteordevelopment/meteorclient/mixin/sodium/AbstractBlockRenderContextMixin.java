@@ -22,18 +22,22 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(value = AbstractBlockRenderContext.class, remap = false)
-public abstract class SodiumBlockOcclusionCacheMixin {
+public abstract class AbstractBlockRenderContextMixin {
 
-    @Shadow protected BlockState state;
-    @Shadow protected BlockPos pos; 
-    @Shadow protected LevelSlice slice;
-
-    @Unique private Xray xray;
+    @Shadow
+    protected BlockState state;
+    @Shadow
+    protected BlockPos pos;
+    @Shadow
+    protected LevelSlice slice;
+    @Unique
+    private Xray xray;
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void onInit(CallbackInfo info) {
         xray = Modules.get().get(Xray.class);
     }
+
     // For More Culling compatibility - runs before More Culling's inject to force-render whitelisted Xray blocks
     @Inject(method = "shouldDrawSide", at = @At("HEAD"), cancellable = true)
     private void meteor$forceXrayFace(Direction facing, CallbackInfoReturnable<Boolean> cir) {
@@ -44,7 +48,10 @@ public abstract class SodiumBlockOcclusionCacheMixin {
 
     @ModifyReturnValue(method = "shouldDrawSide", at = @At("RETURN"))
     private boolean shouldDrawSide(boolean original, Direction facing) {
-        if (!xray.isActive()) return original;
-        return xray.modifyDrawSide(state, slice, pos, facing, original);
+        if (xray.isActive()) {
+            return xray.modifyDrawSide(state, slice, pos, facing, original);
+        }
+
+        return original;
     }
 }

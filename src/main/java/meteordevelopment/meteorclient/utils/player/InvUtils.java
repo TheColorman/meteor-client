@@ -33,7 +33,7 @@ public class InvUtils {
 
     private static Predicate<ItemStack> isOneOf(Item... items) {
         return itemStack -> {
-            for (var item : items) if (itemStack.is(item)) return true;
+            for (var item : items) if (itemStack.isOf(item)) return true;
             return false;
         };
     }

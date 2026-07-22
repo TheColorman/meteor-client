@@ -119,7 +119,7 @@ java {
 // Source: https://github.com/FlorianMichael/BaseProject/blob/main/src/main/kotlin/de/florianmichael/baseproject/Fabric.kt
 // Licensed under Apache License 2.0
 afterEvaluate {
-    val jijConfig = configurations.findByName("api") ?: return@afterEvaluate
+    val jijConfig = configurations.findByName("jij") ?: return@afterEvaluate
 
     // Dependencies to exclude from jar-in-jar
     val excluded = setOf(

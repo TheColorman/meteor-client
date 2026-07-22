@@ -21,6 +21,8 @@ import net.irisshaders.iris.api.v0.IrisApi;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.fluid.FluidState;
+import net.minecraft.registry.tag.FluidTags;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.shape.VoxelShapes;
@@ -49,6 +51,16 @@ public class Xray extends Module {
         .defaultValue(25)
         .range(0, 255)
         .sliderMax(255)
+        .onChanged(onChanged -> {
+            if (isActive()) mc.worldRenderer.reload();
+        })
+        .build()
+    );
+
+    private final Setting<FluidOpacity> fluidOpacity = sgGeneral.add(new EnumSetting.Builder<FluidOpacity>()
+        .name("fluid-opacity")
+        .description("Which fluids should use xray opacity.")
+        .defaultValue(FluidOpacity.Both)
         .onChanged(onChanged -> {
             if (isActive()) mc.worldRenderer.reload();
         })
@@ -87,7 +99,8 @@ public class Xray extends Module {
 
     @EventHandler
     private void onRenderBlockEntity(RenderBlockEntityEvent event) {
-        if (isBlocked(event.blockEntityState.blockState.getBlock(), event.blockEntityState.pos)) event.cancel();
+        BlockState state = event.blockEntityState.blockState;
+        if (getAlpha(state, event.blockEntityState.pos) == 0) event.cancel();
     }
 
     @EventHandler
@@ -133,5 +146,37 @@ public class Xray extends Module {
         }
 
         return -1;
+    }
+
+    public static int getFluidAlpha(FluidState state, BlockPos pos) {
+        WallHack wallHack = Modules.get().get(WallHack.class);
+        Xray xray = Modules.get().get(Xray.class);
+        Block fluidBlock = state.getBlockState().getBlock();
+
+        if (wallHack.isActive() && wallHack.blocks.get().contains(fluidBlock)) {
+            if (MixinPlugin.isIrisPresent && IrisApi.getInstance().isShaderPackInUse()) return 0;
+
+            return xray.isActive() ? xray.opacity.get() : wallHack.opacity.get();
+        } else if (xray.isActive() && !wallHack.isActive() && xray.shouldApplyFluidOpacity(state) && xray.isBlocked(fluidBlock, pos)) {
+            return (MixinPlugin.isIrisPresent && IrisApi.getInstance().isShaderPackInUse()) ? 0 : xray.opacity.get();
+        }
+
+        return -1;
+    }
+
+    private boolean shouldApplyFluidOpacity(FluidState state) {
+        return switch (fluidOpacity.get()) {
+            case None -> false;
+            case Water -> state.isIn(FluidTags.WATER);
+            case Lava -> state.isIn(FluidTags.LAVA);
+            case Both -> state.isIn(FluidTags.WATER) || state.isIn(FluidTags.LAVA);
+        };
+    }
+
+    public enum FluidOpacity {
+        None,
+        Water,
+        Lava,
+        Both
     }
 }

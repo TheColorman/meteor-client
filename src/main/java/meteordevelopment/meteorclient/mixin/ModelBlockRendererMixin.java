@@ -27,21 +27,21 @@ import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 import java.util.List;
 
 @Mixin(BlockModelRenderer.class)
-public abstract class BlockModelRendererMixin {
+public abstract class ModelBlockRendererMixin {
     @Unique
-    private final ThreadLocal<Integer> alphas = new ThreadLocal<>();
+    private final ThreadLocal<Integer> ALPHAS = ThreadLocal.withInitial(() -> -1);
 
     @Inject(method = {"renderSmooth", "renderFlat"}, at = @At("HEAD"), cancellable = true)
     private void onRenderSmooth(BlockRenderView world, List<BlockModelPart> parts, BlockState state, BlockPos pos, MatrixStack matrices, VertexConsumer vertexConsumer, boolean cull, int overlay, CallbackInfo ci) {
         int alpha = Xray.getAlpha(state, pos);
 
         if (alpha == 0) ci.cancel();
-        else alphas.set(alpha);
+        else ALPHAS.set(alpha);
     }
 
     @ModifyArgs(method = "renderQuad", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/VertexConsumer;quad(Lnet/minecraft/client/util/math/MatrixStack$Entry;Lnet/minecraft/client/render/model/BakedQuad;[FFFFF[II)V"))
     private void modifyXrayAlpha(final Args args) {
-        final int alpha = alphas.get();
+        int alpha = ALPHAS.get();
         args.set(6, alpha == -1 ? args.get(6) : alpha / 255f);
     }
 

@@ -281,7 +281,7 @@ public class AutoArmor extends Module {
             Utils.getEnchantments(itemStack, enchantments);
 
             // Return if current armor piece has Curse of Binding
-            if (enchantments.keySet().stream().anyMatch(e -> e.is(Enchantments.BINDING_CURSE))) {
+            if (enchantments.keySet().stream().anyMatch(e -> e.matchesKey(Enchantments.BINDING_CURSE))) {
                 score = Integer.MAX_VALUE; // Setting score to Integer.MAX_VALUE so its now swapped later
                 return;
             }

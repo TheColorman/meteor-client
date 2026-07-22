@@ -124,7 +124,7 @@ public class AirPlace extends Module {
         Item i = stack.getItem();
         return i instanceof BlockItem
             || i instanceof SpawnEggItem
-            || (i instanceof FireworkRocketItem && !mc.player.isFallFlying())
+            || (i instanceof FireworkRocketItem && !mc.player.isGliding())
             || i instanceof ArmorStandItem;
     }
 }

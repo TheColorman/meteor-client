@@ -35,9 +35,6 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.TitleScreen;
 import net.minecraft.client.gui.screen.multiplayer.MultiplayerScreen;
 import net.minecraft.client.gui.screen.world.SelectWorldScreen;
-import net.minecraft.client.gui.screens.TitleScreen;
-import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
-import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
 import net.minecraft.client.render.ProjectionMatrix2;
 import net.minecraft.client.resource.ResourceReloadLogger;
 import net.minecraft.component.ComponentMap;
@@ -208,7 +205,7 @@ public class Utils {
 
     // Not every food item in minecraft is consumable for some reason (e.g. buckets of any fish)
     public static boolean isFood(Item item) {
-        return item.components().has(DataComponents.FOOD) && item.components().has(DataComponents.CONSUMABLE);
+        return item.getComponents().contains(DataComponentTypes.FOOD) && item.getComponents().contains(DataComponentTypes.CONSUMABLE);
     }
 
     public static int getRenderDistance() {

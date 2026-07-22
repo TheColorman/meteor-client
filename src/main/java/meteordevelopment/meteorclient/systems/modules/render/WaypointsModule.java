@@ -34,7 +34,7 @@ import net.minecraft.client.gui.screen.DeathScreen;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.server.permissions.Permissions;
+import net.minecraft.command.DefaultPermissions;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Vector3d;
 
@@ -258,7 +258,7 @@ public class WaypointsModule extends Module {
                 };
             }
 
-            boolean isOperator = mc.player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER);
+            boolean isOperator = mc.player.getPermissions().hasPermission(DefaultPermissions.GAMEMASTERS);
             if (isOperator) {
                 WButton teleportB = table.add(theme.button("TP")).widget();
                 teleportB.action = () -> {

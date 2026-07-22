@@ -209,7 +209,7 @@ public class BookBot extends Module {
                 message.append(Text.literal("The bookbot file is empty! ").formatted(Formatting.RED));
                 message.append(Text.literal("Click here to edit it.")
                     .setStyle(Style.EMPTY
-                        .withFormatting(ChatFormatting.UNDERLINE, ChatFormatting.RED)
+                        .withFormatting(Formatting.UNDERLINE, Formatting.RED)
                         .withClickEvent(new ClickEvent.OpenFile(file.get().getAbsolutePath()))
                     )
                 );

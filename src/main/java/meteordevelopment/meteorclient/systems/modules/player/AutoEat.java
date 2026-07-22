@@ -273,7 +273,7 @@ public class AutoEat extends Module {
         slot = findSlot();
         if (slot == -1) return false;
 
-        ItemStack item = mc.player.getInventory().getItem(slot);
+        ItemStack item = mc.player.getInventory().getStack(slot);
         FoodComponent prop = item.get(DataComponentTypes.FOOD);
         if (prop == null || !Utils.isFood(item)) return false;
 
@@ -328,8 +328,8 @@ public class AutoEat extends Module {
     }
 
     public enum ThresholdMode {
-        Health((health, _) -> health),
-        Hunger((_, hunger) -> hunger),
+        Health((health, _hunger) -> health),
+        Hunger((_health, hunger) -> hunger),
         Any((health, hunger) -> health || hunger),
         Both((health, hunger) -> health && hunger);
 

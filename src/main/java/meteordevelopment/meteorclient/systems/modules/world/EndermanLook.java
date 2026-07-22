@@ -16,7 +16,7 @@ import meteordevelopment.meteorclient.utils.entity.Target;
 import meteordevelopment.meteorclient.utils.player.Rotations;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.block.Blocks;
-import net.minecraft.tags.ItemTags;
+import net.minecraft.registry.tag.ItemTags;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.mob.EndermanEntity;
@@ -48,18 +48,18 @@ public class EndermanLook extends Module {
     @EventHandler
     private void onTick(TickEvent.Pre event) {
         // if either are true nothing happens when you look at an enderman
-        if (mc.player.getEquippedStack(EquipmentSlot.HEAD).isOf(ItemTags.GAZE_DISGUISE_EQUIPMENT) || mc.player.getAbilities().creativeMode) return;
+        if (mc.player.getEquippedStack(EquipmentSlot.HEAD).isOf(Blocks.CARVED_PUMPKIN.asItem()) || mc.player.getAbilities().creativeMode) return;
 
         for (Entity entity : mc.world.getEntities()) {
             if (!(entity instanceof EndermanEntity enderman) || !enderman.isAlive() || !mc.player.canSee(enderman)) continue;
 
             switch (lookMode.get()) {
                 case Away -> {
-                    if (enderman.isCreepy() && stun.get()) Rotations.rotate(Rotations.getYaw(enderman), Rotations.getPitch(enderman, Target.Head), -75, null);
+                    if (enderman.isAngry() && stun.get()) Rotations.rotate(Rotations.getYaw(enderman), Rotations.getPitch(enderman, Target.Head), -75, null);
                     else if (angleCheck(enderman)) Rotations.rotate(mc.player.getYaw(), 90, -75, null);
                 }
                 case At -> {
-                    if (!enderman.isCreepy()) Rotations.rotate(Rotations.getYaw(enderman), Rotations.getPitch(enderman, Target.Head), -75, null);
+                    if (!enderman.isAngry()) Rotations.rotate(Rotations.getYaw(enderman), Rotations.getPitch(enderman, Target.Head), -75, null);
                 }
             }
         }

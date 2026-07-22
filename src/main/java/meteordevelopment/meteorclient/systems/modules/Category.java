@@ -6,16 +6,17 @@
 package meteordevelopment.meteorclient.systems.modules;
 
 import net.minecraft.item.ItemStack;
+import java.util.function.Supplier;
 
 public class Category {
     public final String name;
-    public final ItemStack icon;
+    public final Supplier<ItemStack> icon;
     private final int nameHash;
 
-    public Category(String name, ItemStack icon) {
+    public Category(String name, Supplier<ItemStack> icon) {
         this.name = name;
         this.nameHash = name.hashCode();
-        this.icon = icon == null ? () => ItemStack.EMPTY : icon;
+        this.icon = icon == null ? () -> ItemStack.EMPTY : icon;
     }
     public Category(String name) {
         this(name, null);

@@ -3,69 +3,56 @@
  * Copyright (c) Meteor Development.
  */
 
-package meteordevelopment.meteorclient.mixin.indigo;
+package meteordevelopment.meteorclient.mixin;
 
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import meteordevelopment.meteorclient.systems.modules.Modules;
 import meteordevelopment.meteorclient.systems.modules.render.Xray;
-import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableQuadView;
-import net.fabricmc.fabric.impl.client.indigo.renderer.render.AltModelBlockRendererImpl;
-import net.minecraft.client.renderer.block.BlockAndTintGetter;
-import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.block.BlockState;
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.block.BlockModelRenderer;
+import net.minecraft.client.render.model.BlockModelPart;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.world.BlockRenderView;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.ModifyArgs;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
-@SuppressWarnings("UnstableApiUsage")
-@Mixin(AltModelBlockRendererImpl.class)
+import java.util.List;
+
+@Mixin(BlockModelRenderer.class)
 public abstract class AltModelBlockRendererImplMixin {
-    @Shadow
-    private BlockState blockState;
+    @Unique
+    private final ThreadLocal<Integer> alphas = new ThreadLocal<>();
 
-    @Shadow
-    private BlockPos pos;
+    @Inject(method = {"renderSmooth", "renderFlat"}, at = @At("HEAD"), cancellable = true)
+    private void onRenderSmooth(BlockRenderView world, List<BlockModelPart> parts, BlockState state, BlockPos pos, MatrixStack matrices, VertexConsumer vertexConsumer, boolean cull, int overlay, CallbackInfo ci) {
+        int alpha = Xray.getAlpha(state, pos);
 
-    @Shadow
-    private BlockAndTintGetter level;
+        if (alpha == 0) ci.cancel();
+        else alphas.set(alpha);
+    }
 
-    @ModifyReturnValue(method = "shouldCullFace", at = @At("RETURN"))
-    private boolean shouldCullFace$xray(boolean original, Direction direction) {
-        if (direction == null) return original;
+    @ModifyArgs(method = "renderQuad", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/VertexConsumer;quad(Lnet/minecraft/client/util/math/MatrixStack$Entry;Lnet/minecraft/client/render/model/BakedQuad;[FFFFF[II)V"))
+    private void modifyXrayAlpha(final Args args) {
+        final int alpha = alphas.get();
+        args.set(6, alpha == -1 ? args.get(6) : alpha / 255f);
+    }
 
+    @ModifyReturnValue(method = "shouldDrawFace", at = @At("RETURN"))
+    private static boolean modifyShouldDrawFace(boolean original, BlockRenderView world, BlockState state, boolean cull, Direction side, BlockPos pos) {
         Xray xray = Modules.get().get(Xray.class);
 
         if (xray.isActive()) {
-            return !xray.modifyDrawSide(blockState, level, pos, direction, !original);
+            return xray.modifyDrawSide(state, world, pos.offset(side.getOpposite()), side, original); // thanks mojang
         }
 
         return original;
-    }
-
-    @Inject(method = "transform", at = @At("RETURN"), cancellable = true)
-    private void transform$xray(MutableQuadView quad, CallbackInfoReturnable<Boolean> cir) {
-        int alpha = Xray.getAlpha(blockState, pos);
-
-        if (alpha == 0) {
-            cir.setReturnValue(false);
-        } else if (alpha != -1) {
-            if (alpha > 0 && alpha < 255) {
-                quad.chunkLayer(ChunkSectionLayer.TRANSLUCENT);
-            }
-
-            for (int i = 0; i < 4; i++) {
-                quad.color(i, rewriteQuadAlpha(quad.color(i), alpha));
-            }
-        }
-    }
-
-    @Unique
-    private static int rewriteQuadAlpha(int color, int alpha) {
-        return ((alpha & 0xFF) << 24) | (color & 0x00FFFFFF);
     }
 }

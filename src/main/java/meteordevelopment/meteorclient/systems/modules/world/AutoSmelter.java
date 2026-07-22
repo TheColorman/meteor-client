@@ -15,7 +15,7 @@ import meteordevelopment.meteorclient.systems.modules.Categories;
 import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.meteorclient.utils.Utils;
 import meteordevelopment.meteorclient.utils.player.InvUtils;
-import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -122,7 +122,7 @@ public class AutoSmelter extends Module {
         if (slot == -1) return;
 
         InvUtils.move().fromId(slot).toId(0);
-        c.slots.getFirst().getItem().isEmpty();
+        c.slots.getFirst().getStack().isEmpty();
     }
 
     private void checkFuel(AbstractFurnaceScreenHandler c) {
@@ -149,30 +149,30 @@ public class AutoSmelter extends Module {
 
         if (slot == -1) return;
 
-        ItemStack sourceStack = c.slots.get(slot).getItem();
-        int moveCount = Math.min(fuelItemsPerRefill.get(), Math.min(sourceStack.getCount(), c.slots.get(1).getMaxStackSize(sourceStack)));
+        ItemStack sourceStack = c.slots.get(slot).getStack();
+        int moveCount = Math.min(fuelItemsPerRefill.get(), Math.min(sourceStack.getCount(), c.slots.get(1).getMaxItemCount(sourceStack)));
 
         if (moveCount <= 0) return;
 
         moveFuelItems(c, slot, moveCount);
     }
 
-    private void moveFuelItems(AbstractFurnaceMenu c, int fromId, int amount) {
-        if (amount <= 0 || mc.player == null || mc.gameMode == null) return;
-        if (!mc.player.containerMenu.getCarried().isEmpty()) return;
+    private void moveFuelItems(AbstractFurnaceScreenHandler c, int fromId, int amount) {
+        if (amount <= 0 || mc.player == null || mc.interactionManager == null) return;
+        if (!mc.player.currentScreenHandler.getCursorStack().isEmpty()) return;
 
-        mc.gameMode.handleContainerInput(c.containerId, fromId, 0, ContainerInput.PICKUP, mc.player);
+        mc.interactionManager.clickSlot(c.syncId, fromId, 0, SlotActionType.PICKUP, mc.player);
 
         for (int i = 0; i < amount; i++) {
-            if (mc.player.containerMenu.getCarried().isEmpty()) break;
-            mc.gameMode.handleContainerInput(c.containerId, 1, 1, ContainerInput.PICKUP, mc.player);
+            if (mc.player.currentScreenHandler.getCursorStack().isEmpty()) break;
+            mc.interactionManager.clickSlot(c.syncId, 1, 1, SlotActionType.PICKUP, mc.player);
         }
 
-        if (!mc.player.containerMenu.getCarried().isEmpty()) {
-            mc.gameMode.handleContainerInput(c.containerId, fromId, 0, ContainerInput.PICKUP, mc.player);
+        if (!mc.player.currentScreenHandler.getCursorStack().isEmpty()) {
+            mc.interactionManager.clickSlot(c.syncId, fromId, 0, SlotActionType.PICKUP, mc.player);
         }
 
-        c.slots.get(1).getItem().isEmpty();
+        c.slots.get(1).getStack().isEmpty();
     }
 
     private void takeResults(AbstractFurnaceScreenHandler c) {

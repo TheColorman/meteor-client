@@ -174,13 +174,13 @@ public class PacketLogger extends Module {
         if (!logToChat.get() && !logToFile.get()) return;
 
         // Update count
-        packetCounts.addTo(packet.type(), 1);
+        packetCounts.addTo(packet.getPacketType(), 1);
 
         // Build log message
         StringBuilder msg = new StringBuilder(128);
         if (showTimestamp.get()) msg.append("[").append(LocalDateTime.now().format(TIME_FORMATTER)).append("] ");
-        msg.append(direction).append(" ").append(packet.type());
-        if (showCount.get()) msg.append(" (#").append(packetCounts.getInt(packet.type())).append(")");
+        msg.append(direction).append(" ").append(packet.getPacketType());
+        if (showCount.get()) msg.append(" (#").append(packetCounts.getInt(packet.getPacketType())).append(")");
         if (showPacketData.get()) msg.append("\n  Data: ").append(packet);
 
         // Log to chat and/or file
@@ -287,11 +287,11 @@ public class PacketLogger extends Module {
 
     @EventHandler(priority = EventPriority.HIGHEST + 1)
     private void onReceivePacket(PacketEvent.Receive event) {
-        if (s2cPackets.get().contains(event.packet.type())) logPacket("<- S2C", event.packet);
+        if (s2cPackets.get().contains(event.packet.getPacketType())) logPacket("<- S2C", event.packet);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST + 1)
     private void onSendPacket(PacketEvent.Send event) {
-        if (c2sPackets.get().contains(event.packet.type())) logPacket("-> C2S", event.packet);
+        if (c2sPackets.get().contains(event.packet.getPacketType())) logPacket("-> C2S", event.packet);
     }
 }

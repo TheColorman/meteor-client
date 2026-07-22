@@ -14,7 +14,7 @@ import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.orbit.EventHandler;
 import meteordevelopment.orbit.EventPriority;
 import net.minecraft.network.packet.Packet;
-import net.minecraft.network.protocol.PacketType;
+import net.minecraft.network.packet.PacketType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -43,11 +43,11 @@ public class PacketCanceller extends Module {
 
     @EventHandler(priority = EventPriority.HIGHEST + 1)
     private void onReceivePacket(PacketEvent.Receive event) {
-        if (s2cPackets.get().contains(event.packet.type())) event.cancel();
+        if (s2cPackets.get().contains(event.packet.getPacketType())) event.cancel();
     }
 
     @EventHandler(priority = EventPriority.HIGHEST + 1)
     private void onSendPacket(PacketEvent.Send event) {
-        if (c2sPackets.get().contains(event.packet.type())) event.cancel();
+        if (c2sPackets.get().contains(event.packet.getPacketType())) event.cancel();
     }
 }

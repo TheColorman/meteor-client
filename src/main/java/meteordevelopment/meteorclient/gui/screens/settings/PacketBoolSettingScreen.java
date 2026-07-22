@@ -12,7 +12,7 @@ import meteordevelopment.meteorclient.settings.PacketListSetting;
 import meteordevelopment.meteorclient.settings.Setting;
 import meteordevelopment.meteorclient.utils.network.PacketUtils;
 import net.minecraft.network.packet.Packet;
-import net.minecraft.network.protocol.PacketType;
+import net.minecraft.network.packet.PacketType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;

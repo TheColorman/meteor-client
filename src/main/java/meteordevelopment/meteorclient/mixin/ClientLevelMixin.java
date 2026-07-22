@@ -10,13 +10,13 @@ import meteordevelopment.meteorclient.events.entity.EntityAddedEvent;
 import meteordevelopment.meteorclient.events.entity.EntityRemovedEvent;
 import meteordevelopment.meteorclient.systems.modules.Modules;
 import meteordevelopment.meteorclient.systems.modules.render.NoRender;
-import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.client.world.ClientWorld;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.particle.ParticleTypes;
+import net.minecraft.entity.Entity;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.BlockState;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -26,11 +26,11 @@ import org.spongepowered.asm.mixin.injection.ModifyArgs;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
-@Mixin(ClientLevel.class)
+@Mixin(ClientWorld.class)
 public abstract class ClientLevelMixin {
     @Shadow
     @Nullable
-    public abstract Entity getEntity(int id);
+    public abstract Entity getEntityById(int id);
 
     @Inject(method = "addEntity", at = @At("TAIL"))
     private void onAddEntity(Entity entity, CallbackInfo ci) {
@@ -39,21 +39,21 @@ public abstract class ClientLevelMixin {
 
     @Inject(method = "removeEntity", at = @At("HEAD"))
     private void onRemoveEntity(int id, Entity.RemovalReason reason, CallbackInfo ci) {
-        if (getEntity(id) != null)
-            MeteorClient.EVENT_BUS.post(EntityRemovedEvent.get(getEntity(id)));
+        if (getEntityById(id) != null)
+            MeteorClient.EVENT_BUS.post(EntityRemovedEvent.get(getEntityById(id)));
     }
 
-    @Inject(method = "addDestroyBlockEffect", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "addBlockBreakParticles", at = @At("HEAD"), cancellable = true)
     private void onAddDestroyBlockEffect(BlockPos pos, BlockState blockState, CallbackInfo ci) {
         if (Modules.get().get(NoRender.class).noParticle(ParticleTypes.BLOCK)) ci.cancel();
     }
 
-    @Inject(method = "addBreakingBlockEffect", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "spawnBlockBreakingParticle", at = @At("HEAD"), cancellable = true)
     private void onAddBlockBreakingParticles(BlockPos pos, Direction direction, CallbackInfo ci) {
         if (Modules.get().get(NoRender.class).noParticle(ParticleTypes.BLOCK)) ci.cancel();
     }
 
-    @ModifyArgs(method = "animateTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/ClientLevel;doAnimateTick(IIIILnet/minecraft/util/RandomSource;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/core/BlockPos$MutableBlockPos;)V"))
+    @ModifyArgs(method = "doRandomBlockDisplayTicks", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/world/ClientWorld;randomBlockDisplayTick(IIIILnet/minecraft/util/math/random/Random;Lnet/minecraft/block/Block;Lnet/minecraft/util/math/BlockPos$Mutable;)V"))
     private void doRandomBlockDisplayTicks(Args args) {
         if (Modules.get().get(NoRender.class).noBarrierInvis()) {
             args.set(5, Blocks.BARRIER);
